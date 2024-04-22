@@ -1,2 +1,2 @@
-# finances-app-server
+# budget-boss-api
  
