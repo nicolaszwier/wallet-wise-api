@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Category {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  active      Boolean
+  description String
+  icon        String
+
+  @@map("categories")
+}
+
+model Planning {
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  active         Boolean
+  currency       String
+  dateOfCreation String  @map("date_of_creation")
+  description    String
+  initialBalance Int     @map("initial_balance")
+  userId         String  @map("user_id")
+
+  @@map("plannings")
+}
+
+model Period {
+  id              String @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String @map("user_id")
+  planningId      String @map("planning_id") @db.ObjectId
+  expectedBalance Float  @map("expected_balance")
+  periodEnd       String @map("period_end")
+  periodStart     String @map("period_start")
+
+  transactions Transaction[]
+
+  @@map("periods")
+}
+
+model Transaction {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  periodId    String          @map("period_id") @db.ObjectId
+  userId      String          @map("user_id")
+  amount      Float
+  category    String
+  date        DateTime        @db.Date
+  dateCreated DateTime        @map("date_created") @db.Date
+  description String
+  isPaid      Boolean         @map("is_paid")
+  type        TransactionType
+
+  period Period @relation(fields: [periodId], references: [id])
+
+  @@map("transactions")
+}
+
+model User {
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  active         Boolean
+  dateOfCreation DateTime  @map("date_of_creation")
+  email          String  @unique
+  name           String
+  password       String
+  language       String?
+
+  @@map("users")
+}
