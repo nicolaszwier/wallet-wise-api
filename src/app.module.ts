@@ -10,14 +10,7 @@ import { PlanningsModule } from './modules/plannings/plannings.module';
 import { PeriodsModule } from './modules/periods/periods.module';
 
 @Module({
-  imports: [
-    UsersModule,
-    DatabaseModule,
-    AuthModule,
-    PlanningsModule,
-    PeriodsModule,
-    TransactionsModule,
-  ],
+  imports: [UsersModule, DatabaseModule, AuthModule, PlanningsModule, PeriodsModule, TransactionsModule],
   controllers: [],
   providers: [
     {

@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersRepository } from 'src/shared/database/repositories/users.repositories';
 import { compare, hash } from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
@@ -11,10 +7,7 @@ import { SignupDto } from './dto/signup';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private readonly usersRepo: UsersRepository,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly usersRepo: UsersRepository, private readonly jwtService: JwtService) {}
 
   async signin(signinDto: SigninDto) {
     const { email, password } = signinDto;
