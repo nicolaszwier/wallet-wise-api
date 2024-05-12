@@ -27,25 +27,28 @@ model Category {
 }
 
 model Planning {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  active         Boolean
-  currency       Currency
-  dateOfCreation DateTime @map("date_of_creation")
-  description    String
-  initialBalance Float    @map("initial_balance")
-  userId         String   @map("user_id")
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  active          Boolean
+  currency        Currency
+  dateOfCreation  DateTime @map("date_of_creation")
+  description     String
+  currentBalance  Float    @map("current_balance")
+  expectedBalance Float    @map("expected_balance")
+  userId          String   @map("user_id")
 
   @@map("plannings")
 }
 
 model Period {
-  id                     String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId                 String   @map("user_id")
-  planningId             String   @map("planning_id") @db.ObjectId
-  periodBalance          Float    @map("period_balance")
-  expectedAllTimeBalance Float    @map("expected_all_time_balance")
-  periodEnd              DateTime @map("period_end")
-  periodStart            DateTime @map("period_start")
+  id                             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId                         String   @map("user_id")
+  planningId                     String   @map("planning_id") @db.ObjectId
+  periodBalance                  Float    @map("period_balance")
+  periodBalancePaidOnly          Float    @map("period_balance_paid_only")
+  expectedAllTimeBalance         Float    @map("expected_all_time_balance")
+  expectedAllTimeBalancePaidOnly Float    @map("expected_all_time_balance_paid_only")
+  periodEnd                      DateTime @map("period_end")
+  periodStart                    DateTime @map("period_start")
 
   transactions Transaction[]
 
