@@ -28,7 +28,7 @@ export class PlanningsController {
   }
 
   @Delete(':planningId')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  // @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @ActiveUserId() userId: string,
     @Param('planningId')

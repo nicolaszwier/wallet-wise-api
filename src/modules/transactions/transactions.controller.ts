@@ -9,7 +9,7 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Post()
-  async create(@ActiveUserId() userId: string, @Body() createTransactionDto: CreateTransactionDto) {
+  create(@ActiveUserId() userId: string, @Body() createTransactionDto: CreateTransactionDto) {
     return this.transactionsService.create(userId, createTransactionDto);
   }
 
@@ -28,7 +28,7 @@ export class TransactionsController {
   }
 
   @Delete(':periodId/:transactionId')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  // @HttpCode(HttpStatus.NO_CONTENT)
   remove(
     @ActiveUserId() userId: string,
     @Param('periodId') periodId: string,
