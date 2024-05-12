@@ -41,7 +41,13 @@ export class TransactionsService {
         },
       });
 
-      return this.periodsService.recalculateBalances(userId, periodId);
+      await this.periodsService.recalculateBalances(userId, periodId);
+
+      return {
+        statusCode: HttpStatus.CREATED,
+        message: 'created',
+        error: null,
+      };
     } catch (error) {
       console.log(error);
       throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
@@ -64,27 +70,39 @@ export class TransactionsService {
   }
 
   async update(userId: string, transactionId: string, updateTransactionDto: UpdateTransactionDto) {
-    const { date, description, type, amount, category, isPaid, periodId } = updateTransactionDto;
+    const { date, description, type, amount, category, isPaid, periodId, planningId } = updateTransactionDto;
 
-    await this.validateEntitiesOwnership({
-      userId,
-      transactionId,
-      periodId,
-    });
+    try {
+      await this.validateEntitiesOwnership({
+        userId,
+        transactionId,
+        periodId,
+      });
+      const newPeriodId = await this.periodsService.getPeriodId(userId, planningId, date);
+      await this.transactionsRepo.update({
+        where: { id: transactionId },
+        data: {
+          periodId: newPeriodId,
+          date,
+          description,
+          type,
+          amount: type === TransactionType.EXPENSE ? amount * -1 : amount,
+          category,
+          isPaid,
+        },
+      });
 
-    await this.transactionsRepo.update({
-      where: { id: transactionId },
-      data: {
-        date,
-        description,
-        type,
-        amount: type === TransactionType.EXPENSE ? amount * -1 : amount,
-        category,
-        isPaid,
-      },
-    });
+      await this.periodsService.recalculateBalances(userId, periodId);
 
-    return this.periodsService.recalculateBalances(userId, periodId);
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'updated',
+        error: null,
+      };
+    } catch (error) {
+      console.log(error);
+      throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
+    }
   }
 
   async remove(userId: string, periodId: string, transactionId: string) {
@@ -96,7 +114,11 @@ export class TransactionsService {
 
     await this.periodsService.recalculateBalances(userId, periodId);
 
-    return null;
+    return {
+      statusCode: HttpStatus.NO_CONTENT,
+      message: 'removed',
+      error: null,
+    };
   }
 
   private async validateEntitiesOwnership({

@@ -11,7 +11,15 @@ export class CreatePeriodDto {
 
   @IsNumber()
   @IsNotEmpty()
+  periodBalancePaidOnly: number;
+
+  @IsNumber()
+  @IsNotEmpty()
   expectedAllTimeBalance: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  expectedAllTimeBalancePaidOnly: number;
 
   @IsNotEmpty()
   @IsDate()
