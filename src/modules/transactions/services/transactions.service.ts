@@ -105,6 +105,33 @@ export class TransactionsService {
     }
   }
 
+  async pay(userId: string, periodId: string, transactionId: string) {
+    try {
+      await this.validateEntitiesOwnership({
+        userId,
+        transactionId,
+        periodId,
+      });
+      await this.transactionsRepo.update({
+        where: { id: transactionId },
+        data: {
+          isPaid: true,
+        },
+      });
+
+      await this.periodsService.recalculateBalances(userId, periodId);
+
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'updated',
+        error: null,
+      };
+    } catch (error) {
+      console.log(error);
+      throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   async remove(userId: string, periodId: string, transactionId: string) {
     await this.validateEntitiesOwnership({ userId, transactionId, periodId });
 

@@ -13,6 +13,15 @@ export class TransactionsController {
     return this.transactionsService.create(userId, createTransactionDto);
   }
 
+  @Put('pay/:periodId/:transactionId')
+  pay(
+    @ActiveUserId() userId: string,
+    @Param('periodId') periodId: string,
+    @Param('transactionId') transactionId: string,
+  ) {
+    return this.transactionsService.pay(userId, periodId, transactionId);
+  }
+
   @Get(':periodId')
   findAll(@ActiveUserId() userId: string, @Param('periodId') periodId: string) {
     return this.transactionsService.findAllByUserId(userId, { periodId });
