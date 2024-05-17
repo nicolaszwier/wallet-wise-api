@@ -6,6 +6,6 @@ import { ValidatePlanningOwnershipService } from './services/validate-planning-o
 @Module({
   controllers: [PlanningsController],
   providers: [PlanningsService, ValidatePlanningOwnershipService],
-  exports: [ValidatePlanningOwnershipService],
+  exports: [PlanningsService, ValidatePlanningOwnershipService],
 })
 export class PlanningsModule {}

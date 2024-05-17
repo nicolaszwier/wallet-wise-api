@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { PlanningsRepository } from 'src/shared/database/repositories/plannings.repositories';
 import { CreatePlanningDto } from '../dto/create-planning.dto';
 import { ValidatePlanningOwnershipService } from './validate-planning-ownership.service';
@@ -18,20 +18,22 @@ export class PlanningsService {
         id: true,
         description: true,
         currency: true,
-        initialBalance: true,
+        currentBalance: true,
+        expectedBalance: true,
         dateOfCreation: true,
       },
     });
   }
 
   create(userId: string, createPlanningDto: CreatePlanningDto) {
-    const { description, initialBalance, currency } = createPlanningDto;
+    const { description, currency } = createPlanningDto;
 
     return this.planningsRepo.create({
       data: {
         userId,
         description,
-        initialBalance,
+        currentBalance: 0,
+        expectedBalance: 0,
         currency,
         active: true,
         dateOfCreation: new Date(),
@@ -59,13 +61,36 @@ export class PlanningsService {
     });
   }
 
+  async updateTotals(
+    userId: string,
+    planningId: string,
+    { currentBalance, expectedBalance }: { currentBalance: number; expectedBalance: number },
+  ) {
+    await this.validatePlanningOwnershipService.validate(userId, planningId);
+
+    return this.planningsRepo.update({
+      where: { id: planningId },
+      data: {
+        currentBalance,
+        expectedBalance,
+      },
+    });
+  }
+
   async remove(userId: string, planningId: string) {
     await this.validatePlanningOwnershipService.validate(userId, planningId);
 
-    await this.planningsRepo.delete({
+    await this.planningsRepo.update({
       where: { id: planningId },
+      data: {
+        active: false,
+      },
     });
 
-    return null;
+    return {
+      statusCode: HttpStatus.NO_CONTENT,
+      message: 'removed',
+      error: null,
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
 import { PeriodsRepository } from 'src/shared/database/repositories/periods.repositories';
 import { CreatePeriodDto } from '../dto/create-period.dto';
 import { ValidatePeriodOwnershipService } from './validate-period-ownership.service';
@@ -7,6 +7,7 @@ import * as isoWeek from 'dayjs/plugin/isoWeek';
 import * as utc from 'dayjs/plugin/utc';
 import { Period } from '@prisma/client';
 import { SortOrder } from '../model/SortOrder';
+import { PlanningsService } from 'src/modules/plannings/services/plannings.service';
 
 dayjs.extend(isoWeek);
 dayjs.extend(utc);
@@ -16,6 +17,7 @@ export class PeriodsService {
   constructor(
     private readonly periodsRepo: PeriodsRepository,
     private readonly validatePeriodOwnershipService: ValidatePeriodOwnershipService,
+    private readonly planningsService: PlanningsService,
   ) {}
 
   async findAllByUserId(
@@ -55,6 +57,7 @@ export class PeriodsService {
     let period = await this.periodsRepo.findFirst({
       where: {
         userId,
+        planningId,
         periodStart: { gte: periodStart },
         periodEnd: { lte: periodEnd },
       },
@@ -64,7 +67,9 @@ export class PeriodsService {
       period = await this.create(userId, {
         planningId,
         periodBalance: 0,
+        periodBalancePaidOnly: 0,
         expectedAllTimeBalance: 0,
+        expectedAllTimeBalancePaidOnly: 0,
         periodStart,
         periodEnd,
       });
@@ -82,14 +87,24 @@ export class PeriodsService {
   }
 
   create(userId: string, createPeriodDto: CreatePeriodDto) {
-    const { planningId, periodBalance, expectedAllTimeBalance, periodStart, periodEnd } = createPeriodDto;
+    const {
+      planningId,
+      periodBalance,
+      periodBalancePaidOnly,
+      expectedAllTimeBalance,
+      expectedAllTimeBalancePaidOnly,
+      periodStart,
+      periodEnd,
+    } = createPeriodDto;
 
     return this.periodsRepo.create({
       data: {
         userId,
         planningId,
         periodBalance,
+        periodBalancePaidOnly,
         expectedAllTimeBalance,
+        expectedAllTimeBalancePaidOnly,
         periodStart,
         periodEnd,
       },
@@ -98,7 +113,7 @@ export class PeriodsService {
 
   async recalculateBalances(userId, periodId: string) {
     const period = (await this.findByPeriodId(periodId)) as Period & {
-      transactions: [{ amount: number }];
+      transactions: [{ amount: number; isPaid: boolean }];
     };
     if (!period) return;
     const result = await this.recalculatePeriodBalance(period);
@@ -107,7 +122,7 @@ export class PeriodsService {
 
   async recalculatePeriodBalance(
     period: Period & {
-      transactions: [{ amount: number }];
+      transactions: [{ amount: number; isPaid: boolean }];
     },
   ) {
     const initialValue = 0;
@@ -116,9 +131,15 @@ export class PeriodsService {
       initialValue,
     );
 
+    const totalBalancePaidOnly = period.transactions
+      .filter((transaction) => transaction.isPaid)
+      .reduce((accumulator, currentValue) => accumulator + currentValue.amount, 0);
+
     return this.updatePeriodBalance(period.userId, period.id, {
       expectedAllTimeBalance: period.expectedAllTimeBalance,
+      expectedAllTimeBalancePaidOnly: period.expectedAllTimeBalancePaidOnly,
       periodBalance: totalBalance,
+      periodBalancePaidOnly: totalBalancePaidOnly,
     });
   }
 
@@ -132,6 +153,7 @@ export class PeriodsService {
       orderBy: { periodStart: SortOrder.desc },
     });
     let lastAllTimeBalance = previousWeekPeriod?.expectedAllTimeBalance;
+    let lastAllTimeBalancePaidOnly = previousWeekPeriod?.expectedAllTimeBalancePaidOnly;
 
     const periods = await this.periodsRepo.findMany({
       where: {
@@ -142,18 +164,41 @@ export class PeriodsService {
       orderBy: { periodStart: SortOrder.asc },
     });
 
-    const updatedPeriods = periods.map(({ expectedAllTimeBalance, periodBalance, userId, id }, index, arr) => {
-      const previousPeriod = arr[index - 1];
-      if (previousPeriod) {
-        expectedAllTimeBalance = lastAllTimeBalance + periodBalance;
-        lastAllTimeBalance = expectedAllTimeBalance;
-      } else {
-        if (id === period.id) {
-          expectedAllTimeBalance = (lastAllTimeBalance || 0) + periodBalance;
+    const updatedPeriods = periods.map(
+      (
+        { expectedAllTimeBalance, expectedAllTimeBalancePaidOnly, periodBalance, periodBalancePaidOnly, userId, id },
+        index,
+        arr,
+      ) => {
+        const previousPeriod = arr[index - 1];
+        if (previousPeriod) {
+          expectedAllTimeBalance = lastAllTimeBalance + periodBalance;
+          expectedAllTimeBalancePaidOnly = lastAllTimeBalancePaidOnly + periodBalancePaidOnly;
           lastAllTimeBalance = expectedAllTimeBalance;
+          lastAllTimeBalancePaidOnly = expectedAllTimeBalancePaidOnly;
+        } else {
+          if (id === period.id) {
+            expectedAllTimeBalance = (lastAllTimeBalance || 0) + periodBalance;
+            expectedAllTimeBalancePaidOnly = (lastAllTimeBalancePaidOnly || 0) + periodBalancePaidOnly;
+            lastAllTimeBalance = expectedAllTimeBalance;
+            lastAllTimeBalancePaidOnly = expectedAllTimeBalancePaidOnly;
+          }
         }
-      }
-      return { expectedAllTimeBalance, periodBalance, userId, id };
+        return {
+          expectedAllTimeBalance,
+          expectedAllTimeBalancePaidOnly,
+          periodBalance,
+          periodBalancePaidOnly,
+          userId,
+          id,
+        };
+      },
+    );
+
+    // atualizar aqui a planning com os totais
+    await this.planningsService.updateTotals(period.userId, period.planningId, {
+      currentBalance: lastAllTimeBalancePaidOnly,
+      expectedBalance: lastAllTimeBalance,
     });
 
     return await Promise.all(
@@ -166,10 +211,14 @@ export class PeriodsService {
     periodId: string,
     {
       periodBalance,
+      periodBalancePaidOnly,
       expectedAllTimeBalance,
+      expectedAllTimeBalancePaidOnly,
     }: {
       periodBalance: number;
+      periodBalancePaidOnly: number;
       expectedAllTimeBalance: number;
+      expectedAllTimeBalancePaidOnly: number;
     },
   ) {
     await this.validatePeriodOwnershipService.validate(userId, periodId);
@@ -177,7 +226,9 @@ export class PeriodsService {
       where: { id: periodId },
       data: {
         periodBalance,
+        periodBalancePaidOnly,
         expectedAllTimeBalance,
+        expectedAllTimeBalancePaidOnly,
       },
     });
   }
@@ -199,6 +250,10 @@ export class PeriodsService {
       where: { id: periodId },
     });
 
-    return null;
+    return {
+      statusCode: HttpStatus.NO_CONTENT,
+      message: 'removed',
+      error: null,
+    };
   }
 }
