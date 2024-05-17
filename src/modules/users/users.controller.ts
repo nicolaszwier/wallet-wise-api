@@ -11,6 +11,7 @@ export class UsersController {
     return this.usersService.getUserById(userId);
   }
 
+  @IsPublic()
   @Get('/status')
   status() {
     return {
