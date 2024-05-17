@@ -10,4 +10,13 @@ export class UsersController {
   me(@ActiveUserId() userId: string) {
     return this.usersService.getUserById(userId);
   }
+
+  @Get('/status')
+  status() {
+    return {
+      statusCode: 200,
+      message: 'WalletWise API is live',
+      error: null,
+    };
+  }
 }
