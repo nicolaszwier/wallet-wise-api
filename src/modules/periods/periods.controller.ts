@@ -11,11 +11,19 @@ export class PeriodsController {
   findAll(
     @ActiveUserId() userId: string,
     @Param('planningId') planningId: string,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('includeExpenses') includeExpenses: boolean,
+    @Query('includeIncomes') includeIncomes: boolean,
     @Query('sortOrder') sortOrder: SortOrder,
   ) {
     return this.periodsService.findAllByUserId(userId, planningId, {
       sortOrder,
       includeTransactions: true,
+      startDate,
+      endDate,
+      includeExpenses: Boolean(includeExpenses),
+      includeIncomes: Boolean(includeIncomes),
     });
   }
 }

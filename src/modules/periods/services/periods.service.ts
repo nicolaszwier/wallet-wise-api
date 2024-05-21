@@ -5,9 +5,10 @@ import { ValidatePeriodOwnershipService } from './validate-period-ownership.serv
 import * as dayjs from 'dayjs';
 import * as isoWeek from 'dayjs/plugin/isoWeek';
 import * as utc from 'dayjs/plugin/utc';
-import { Period } from '@prisma/client';
+import { Period, TransactionType } from '@prisma/client';
 import { SortOrder } from '../model/SortOrder';
 import { PlanningsService } from 'src/modules/plannings/services/plannings.service';
+import { PeriodsRequestFilters } from '../model/PeriodsRequestFilters';
 
 dayjs.extend(isoWeek);
 dayjs.extend(utc);
@@ -23,15 +24,27 @@ export class PeriodsService {
   async findAllByUserId(
     userId: string,
     planningId: string,
-    filters: {
-      includeTransactions: boolean;
-      sortOrder: SortOrder;
-    } = { includeTransactions: true, sortOrder: SortOrder.desc },
+    filters: PeriodsRequestFilters = {
+      includeTransactions: true,
+      sortOrder: SortOrder.desc,
+      startDate: '',
+      endDate: '',
+      includeIncomes: true,
+      includeExpenses: true,
+    },
   ) {
     await this.validatePeriodOwnershipService.validatePlanningParam(planningId);
 
+    const periodStart = this.getStartOfWeek(new Date(filters.startDate));
+    const periodEnd = this.getEndOfWeek(new Date(filters.endDate));
+    //todo - implement filters by transaction type and transaction status
     return this.periodsRepo.findMany({
-      where: { userId, planningId },
+      where: {
+        userId,
+        planningId,
+        periodStart: { gte: periodStart },
+        periodEnd: { lte: periodEnd },
+      },
       orderBy: { periodStart: filters.sortOrder || SortOrder.desc },
       include: {
         transactions: filters.includeTransactions,
