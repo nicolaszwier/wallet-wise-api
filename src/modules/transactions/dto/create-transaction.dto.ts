@@ -1,11 +1,15 @@
 import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsPositive, IsString } from 'class-validator';
 import { TransactionType } from '../model/Transaction';
-import { Category } from '../model/Category';
+// import { Category } from '../model/Category';
 
 export class CreateTransactionDto {
   @IsString()
   @IsNotEmpty()
   planningId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  categoryId: string;
 
   @IsString()
   @IsNotEmpty()
@@ -23,10 +27,6 @@ export class CreateTransactionDto {
   @IsNotEmpty()
   @IsBoolean()
   isPaid: boolean;
-
-  @IsNotEmpty()
-  @IsEnum(Category)
-  category: Category;
 
   @IsNotEmpty()
   @IsEnum(TransactionType)

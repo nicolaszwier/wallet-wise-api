@@ -19,7 +19,7 @@ export class TransactionsService {
   ) {}
 
   async create(userId: string, createTransactionDto: CreateTransactionDto) {
-    const { planningId, description, amount, category, date, isPaid, type } = createTransactionDto;
+    const { planningId, categoryId, description, amount, date, isPaid, type } = createTransactionDto;
 
     try {
       await this.validateEntitiesOwnership({
@@ -30,11 +30,11 @@ export class TransactionsService {
         data: {
           userId,
           planningId,
+          categoryId,
           periodId: periodId,
           description,
           amount: type === TransactionType.EXPENSE ? amount * -1 : amount,
           type,
-          category,
           date: dayjs(date).utc().format(),
           isPaid,
           dateCreated: dayjs().utc(true).format(),
@@ -70,7 +70,7 @@ export class TransactionsService {
   }
 
   async update(userId: string, transactionId: string, updateTransactionDto: UpdateTransactionDto) {
-    const { date, description, type, amount, category, isPaid, periodId, planningId } = updateTransactionDto;
+    const { date, description, type, amount, categoryId, isPaid, periodId, planningId } = updateTransactionDto;
 
     try {
       await this.validateEntitiesOwnership({
@@ -83,11 +83,11 @@ export class TransactionsService {
         where: { id: transactionId },
         data: {
           periodId: newPeriodId,
+          categoryId,
           date,
           description,
           type,
           amount: type === TransactionType.EXPENSE ? amount * -1 : amount,
-          category,
           isPaid,
         },
       });
