@@ -10,6 +10,8 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.enableCors({ origin: '*' });
 
+  console.log("deployment test")
+
   await app.listen(process.env.PORT || 3000);
 }
 
