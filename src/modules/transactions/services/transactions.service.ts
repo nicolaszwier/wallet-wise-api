@@ -92,7 +92,12 @@ export class TransactionsService {
         },
       });
 
+      // precisa recalcular o period balances do periodId e do newPeriodId tambem
+      // tech debt: melhorar a logica para nao precisar chamar a mesma funcao duas vezes
       await this.periodsService.recalculateBalances(userId, periodId);
+      if (periodId !== newPeriodId) {
+        await this.periodsService.recalculateBalances(userId, newPeriodId);
+      }
 
       return {
         statusCode: HttpStatus.OK,
