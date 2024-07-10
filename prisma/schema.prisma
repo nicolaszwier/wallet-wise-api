@@ -80,13 +80,14 @@ model User {
 }
 
 model Category {
-  id          String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String?       @map("user_id") @db.ObjectId
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?         @map("user_id") @db.ObjectId
   active      Boolean
   description String
   icon        String
   color       String
-  User        User?         @relation(fields: [userId], references: [id])
+  type        TransactionType
+  User        User?           @relation(fields: [userId], references: [id])
   Transaction Transaction[]
 
   @@map("categories")
