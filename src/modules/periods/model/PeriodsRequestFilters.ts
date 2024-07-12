@@ -1,4 +1,4 @@
-import { SortOrder } from "./SortOrder";
+import { SortOrder } from './SortOrder';
 
 export interface PeriodsRequestFilters {
   startDate: string;

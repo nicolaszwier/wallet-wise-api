@@ -17,15 +17,6 @@ enum Currency {
   CAD
 }
 
-model Category {
-  id          String  @id @default(auto()) @map("_id") @db.ObjectId
-  active      Boolean
-  description String
-  icon        String
-
-  @@map("categories")
-}
-
 model Planning {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   active          Boolean
@@ -59,16 +50,17 @@ model Transaction {
   id          String          @id @default(auto()) @map("_id") @db.ObjectId
   periodId    String          @map("period_id") @db.ObjectId
   planningId  String          @map("planning_id") @db.ObjectId
+  categoryId  String          @map("category_id") @db.ObjectId
   userId      String          @map("user_id")
   amount      Float
-  category    String
   date        DateTime        @db.Date
   dateCreated DateTime        @map("date_created") @db.Date
   description String
   isPaid      Boolean         @map("is_paid")
   type        TransactionType
 
-  period Period @relation(fields: [periodId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  period   Period   @relation(fields: [periodId], references: [id])
 
   @@map("transactions")
 }
@@ -82,5 +74,21 @@ model User {
   password       String
   language       String?
 
+  categories Category[]
+
   @@map("users")
+}
+
+model Category {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?         @map("user_id") @db.ObjectId
+  active      Boolean
+  description String
+  icon        String
+  color       String
+  type        TransactionType
+  User        User?           @relation(fields: [userId], references: [id])
+  Transaction Transaction[]
+
+  @@map("categories")
 }

@@ -47,7 +47,7 @@ export class PeriodsService {
       },
       orderBy: { periodStart: filters.sortOrder || SortOrder.desc },
       include: {
-        transactions: filters.includeTransactions,
+        transactions: filters.includeTransactions ? { include: { category: true } } : false,
       },
     });
   }

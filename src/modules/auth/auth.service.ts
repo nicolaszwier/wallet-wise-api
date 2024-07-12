@@ -4,6 +4,7 @@ import { compare, hash } from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { SigninDto } from './dto/signin';
 import { SignupDto } from './dto/signup';
+import { defaultCategories } from 'src/shared/database/data/categories';
 
 @Injectable()
 export class AuthService {
@@ -52,6 +53,11 @@ export class AuthService {
         password: hashedPassword,
         active: true,
         dateOfCreation: new Date(),
+        categories: {
+          createMany: {
+            data: defaultCategories,
+          },
+        },
       },
     });
 

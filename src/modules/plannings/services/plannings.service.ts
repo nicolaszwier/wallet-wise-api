@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PlanningsRepository } from 'src/shared/database/repositories/plannings.repositories';
 import { CreatePlanningDto } from '../dto/create-planning.dto';
 import { ValidatePlanningOwnershipService } from './validate-planning-ownership.service';
@@ -42,23 +42,32 @@ export class PlanningsService {
   }
 
   async update(userId: string, planningId: string, updatePlanningDto: UpdatePlanningDto) {
-    await this.validatePlanningOwnershipService.validate(userId, planningId);
+    try {
+      await this.validatePlanningOwnershipService.validate(userId, planningId);
+      const { description, currency } = updatePlanningDto;
+      await this.planningsRepo.update({
+        where: { id: planningId },
+        data: {
+          description,
+          currency,
+        },
+        select: {
+          id: true,
+          description: true,
+          currency: true,
+          active: true,
+        },
+      });
 
-    const { description, currency } = updatePlanningDto;
-
-    return this.planningsRepo.update({
-      where: { id: planningId },
-      data: {
-        description,
-        currency,
-      },
-      select: {
-        id: true,
-        description: true,
-        currency: true,
-        active: true,
-      },
-    });
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'updated',
+        error: null,
+      };
+    } catch (error) {
+      console.log(error);
+      throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
+    }
   }
 
   async updateTotals(
