@@ -1,2 +1,2 @@
-# finances-app-server
+# wallet-wise-api
  
