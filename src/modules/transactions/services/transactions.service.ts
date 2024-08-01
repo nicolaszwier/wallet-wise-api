@@ -54,6 +54,58 @@ export class TransactionsService {
     }
   }
 
+  async createMany(userId: string, createTransactionDto: CreateTransactionDto[]) {
+    const data = [];
+
+    try {
+      await this.validateEntitiesOwnership({
+        userId,
+      });
+
+      for await (const transaction of createTransactionDto) {
+        const { planningId, categoryId, description, amount, date, isPaid, type } = transaction;
+
+        try {
+          const periodId = await this.periodsService.getPeriodId(userId, planningId, date);
+          data.push({
+            userId,
+            planningId,
+            categoryId,
+            periodId: periodId,
+            description,
+            amount: type === TransactionType.EXPENSE ? amount * -1 : amount,
+            type,
+            date: dayjs(date).utc().format(),
+            isPaid,
+            dateCreated: dayjs().utc(true).format(),
+          });
+        } catch (error) {
+          console.log(error);
+          throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
+        }
+      }
+
+      await this.transactionsRepo.createMany({
+        data: data,
+      });
+
+      //sorts the array of transactions to get the oldest periodId to recalculate the balances
+      data.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+
+      // tech debt: improve logic of recalculating balances
+      await this.periodsService.recalculateBalances(userId, data[0].periodId);
+
+      return {
+        statusCode: HttpStatus.CREATED,
+        message: 'created',
+        error: null,
+      };
+    } catch (error) {
+      console.log(error);
+      throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
+    }
+  }
+
   findAllByUserId(
     userId: string,
     filters: {

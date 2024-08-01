@@ -13,6 +13,11 @@ export class TransactionsController {
     return this.transactionsService.create(userId, createTransactionDto);
   }
 
+  @Post('many')
+  createMany(@ActiveUserId() userId: string, @Body() createTransactionDto: CreateTransactionDto[]) {
+    return this.transactionsService.createMany(userId, createTransactionDto);
+  }
+
   @Put('pay/:periodId/:transactionId')
   pay(
     @ActiveUserId() userId: string,
