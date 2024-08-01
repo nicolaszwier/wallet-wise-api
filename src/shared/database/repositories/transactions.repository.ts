@@ -19,6 +19,10 @@ export class TransactionsRepository {
     return this.prismaService.transaction.create(createDto);
   }
 
+  createMany(createDto: Prisma.TransactionCreateManyArgs) {
+    return this.prismaService.transaction.createMany(createDto);
+  }
+
   update(updateDto: Prisma.TransactionUpdateArgs) {
     return this.prismaService.transaction.update(updateDto);
   }
