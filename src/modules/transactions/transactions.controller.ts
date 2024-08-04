@@ -32,6 +32,11 @@ export class TransactionsController {
     return this.transactionsService.findAllByUserId(userId, { periodId });
   }
 
+  @Get('due-this-week/:planningId')
+  findAllPendingDueInAWeek(@ActiveUserId() userId: string, @Param('planningId') planningId: string) {
+    return this.transactionsService.findAllPendingDueInAWeek(userId, planningId);
+  }
+
   @Put(':transactionId')
   update(
     @ActiveUserId() userId: string,

@@ -121,6 +121,19 @@ export class TransactionsService {
     });
   }
 
+  findAllPendingDueInAWeek(userId: string, planningId: string) {
+    return this.transactionsRepo.findMany({
+      where: {
+        userId,
+        planningId: planningId,
+        isPaid: false,
+        date: { lte: dayjs().utc().add(7, 'day').toDate() },
+      },
+      include: { category: true },
+      orderBy: { date: 'asc' },
+    });
+  }
+
   async update(userId: string, transactionId: string, updateTransactionDto: UpdateTransactionDto) {
     const { date, description, type, amount, categoryId, isPaid, periodId, planningId } = updateTransactionDto;
 
