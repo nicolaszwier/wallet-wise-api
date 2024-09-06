@@ -1,11 +1,11 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PeriodsRepository } from 'src/shared/database/repositories/periods.repositories';
 import { CreatePeriodDto } from '../dto/create-period.dto';
 import { ValidatePeriodOwnershipService } from './validate-period-ownership.service';
 import * as dayjs from 'dayjs';
 import * as isoWeek from 'dayjs/plugin/isoWeek';
 import * as utc from 'dayjs/plugin/utc';
-import { Period, TransactionType } from '@prisma/client';
+import { Period } from '@prisma/client';
 import { SortOrder } from '../model/SortOrder';
 import { PlanningsService } from 'src/modules/plannings/services/plannings.service';
 import { PeriodsRequestFilters } from '../model/PeriodsRequestFilters';
@@ -33,23 +33,41 @@ export class PeriodsService {
       includeExpenses: true,
     },
   ) {
-    await this.validatePeriodOwnershipService.validatePlanningParam(planningId);
+    try {
+      await this.validatePeriodOwnershipService.validatePlanningParam(planningId);
 
-    const periodStart = this.getStartOfWeek(new Date(filters.startDate));
-    const periodEnd = this.getEndOfWeek(new Date(filters.endDate));
-    //todo - implement filters by transaction type and transaction status
-    return this.periodsRepo.findMany({
-      where: {
-        userId,
-        planningId,
-        periodStart: { gte: periodStart },
-        periodEnd: { lte: periodEnd },
-      },
-      orderBy: { periodStart: filters.sortOrder || SortOrder.desc },
-      include: {
-        transactions: filters.includeTransactions ? { include: { category: true } } : false,
-      },
-    });
+      const periodStart = this.getStartOfWeek(new Date(filters.startDate));
+      const periodEnd = this.getEndOfWeek(new Date(filters.endDate));
+      //todo - implement filters by transaction type and transaction status
+      const periods = await this.periodsRepo.findMany({
+        where: {
+          userId,
+          planningId,
+          periodStart: { gte: periodStart },
+          periodEnd: { lte: periodEnd },
+        },
+        orderBy: { periodStart: filters.sortOrder || SortOrder.desc },
+        include: {
+          transactions: filters.includeTransactions ? { include: { category: true } } : false,
+        },
+      });
+
+      // Prisma currently does not support ordering nested relations directly in MongoDB so it's necessary to do on code level
+      if (filters.includeTransactions) {
+        periods?.forEach((period) => {
+          (
+            period as Period & {
+              transactions: [{ date: Date }];
+            }
+          ).transactions.sort((a, b) => Date.parse(a.date.toString()) - Date.parse(b.date.toString()));
+        });
+      }
+
+      return periods || [];
+    } catch (error) {
+      console.log(error);
+      throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
+    }
   }
 
   findByPeriodId(periodId: string) {
