@@ -15,6 +15,9 @@ enum TransactionType {
 enum Currency {
   BRL
   CAD
+  EUR
+  GBP
+  USD
 }
 
 model Planning {
