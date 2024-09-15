@@ -11,7 +11,7 @@ export class UsersService {
       select: {
         name: true,
         email: true,
-        categories: true,
+        categories: { orderBy: { description: 'asc' } },
       },
     });
   }
