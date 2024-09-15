@@ -38,6 +38,13 @@ export const defaultCategories = [
   },
   {
     active: true,
+    description: 'Education',
+    icon: 'book.fill',
+    color: '.green',
+    type: TransactionType.EXPENSE,
+  },
+  {
+    active: true,
     description: 'Entertainment',
     icon: 'play.tv.fill',
     color: '.red',
