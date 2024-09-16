@@ -79,6 +79,16 @@ export class PeriodsService {
     });
   }
 
+  findManyByPeriodIds(periodIds: string[]) {
+    return this.periodsRepo.findMany({
+      where: { id: { in: periodIds } },
+      include: {
+        transactions: true,
+      },
+      orderBy: { periodStart: 'asc' },
+    });
+  }
+
   async getPeriodId(userId, planningId: string, transactionDate: string) {
     const date = new Date(transactionDate);
 
@@ -142,13 +152,15 @@ export class PeriodsService {
     });
   }
 
-  async recalculateBalances(userId, periodId: string) {
-    const period = (await this.findByPeriodId(periodId)) as Period & {
+  async recalculateBalances(userId, periodIds: string[]) {
+    const periods = (await this.findManyByPeriodIds(periodIds)) as (Period & {
       transactions: [{ amount: number; isPaid: boolean }];
-    };
-    if (!period) return;
-    const result = await this.recalculatePeriodBalance(period);
-    return this.recalculateAllTimeBalance(result);
+    })[];
+    if (periods?.length < 1) return;
+    const promises = periods.map((period) => this.recalculatePeriodBalance(period));
+    const result = await Promise.all(promises);
+    // gets the oldest period and recalculate all balances since then
+    return this.recalculateAllTimeBalance(result?.[0]);
   }
 
   async recalculatePeriodBalance(

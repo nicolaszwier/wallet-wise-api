@@ -41,7 +41,7 @@ export class TransactionsService {
         },
       });
 
-      await this.periodsService.recalculateBalances(userId, periodId);
+      await this.periodsService.recalculateBalances(userId, [periodId]);
 
       return {
         statusCode: HttpStatus.CREATED,
@@ -55,7 +55,7 @@ export class TransactionsService {
   }
 
   async createMany(userId: string, createTransactionDto: CreateTransactionDto[]) {
-    const data = [];
+    const transactions = [];
 
     try {
       await this.validateEntitiesOwnership({
@@ -67,7 +67,7 @@ export class TransactionsService {
 
         try {
           const periodId = await this.periodsService.getPeriodId(userId, planningId, date);
-          data.push({
+          transactions.push({
             userId,
             planningId,
             categoryId,
@@ -86,14 +86,15 @@ export class TransactionsService {
       }
 
       await this.transactionsRepo.createMany({
-        data: data,
+        data: transactions,
       });
 
       //sorts the array of transactions to get the oldest periodId to recalculate the balances
-      data.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+      // transactions.sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+      const periodIds: string[] = transactions.map((el) => el.periodId);
 
       // tech debt: improve logic of recalculating balances
-      await this.periodsService.recalculateBalances(userId, data[0].periodId);
+      await this.periodsService.recalculateBalances(userId, periodIds);
 
       return {
         statusCode: HttpStatus.CREATED,
@@ -159,9 +160,9 @@ export class TransactionsService {
 
       // precisa recalcular o period balances do periodId e do newPeriodId tambem
       // tech debt: melhorar a logica para nao precisar chamar a mesma funcao duas vezes
-      await this.periodsService.recalculateBalances(userId, periodId);
+      await this.periodsService.recalculateBalances(userId, [periodId]);
       if (periodId !== newPeriodId) {
-        await this.periodsService.recalculateBalances(userId, newPeriodId);
+        await this.periodsService.recalculateBalances(userId, [newPeriodId]);
       }
 
       return {
@@ -189,7 +190,7 @@ export class TransactionsService {
         },
       });
 
-      await this.periodsService.recalculateBalances(userId, periodId);
+      await this.periodsService.recalculateBalances(userId, [periodId]);
 
       return {
         statusCode: HttpStatus.OK,
@@ -209,7 +210,7 @@ export class TransactionsService {
       where: { id: transactionId },
     });
 
-    await this.periodsService.recalculateBalances(userId, periodId);
+    await this.periodsService.recalculateBalances(userId, [periodId]);
 
     return {
       statusCode: HttpStatus.NO_CONTENT,
