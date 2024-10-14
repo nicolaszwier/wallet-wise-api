@@ -7,6 +7,7 @@ import { ValidateTransactionOwnershipService } from './validate-transaction-owne
 import { PeriodsService } from 'src/modules/periods/services/periods.service';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
+import { getEndOfMonth, getStartOfMonth } from 'src/shared/utils/utils';
 
 dayjs.extend(utc);
 
@@ -132,6 +133,165 @@ export class TransactionsService {
       include: { category: true },
       orderBy: { date: 'asc' },
     });
+  }
+
+  // if month and year are not passed, return the balance for the current month
+  async findMonthlyBalance(userId: string, planningId: string, month: string, year: string) {
+    const date = year && month ? new Date(Number(year), Number(month) - 1) : new Date();
+
+    const result = await this.transactionsRepo.agregate({
+      pipeline: [
+        {
+          $match: {
+            user_id: userId,
+            planning_id: {
+              $oid: planningId,
+            },
+            date: {
+              $gte: {
+                $date: getStartOfMonth(date),
+              },
+              $lt: {
+                $date: getEndOfMonth(date),
+              },
+            },
+          },
+        },
+        {
+          $addFields: {
+            year: {
+              $year: '$date',
+            },
+            month: {
+              $month: '$date',
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              category_id: '$category_id',
+              type: '$type',
+              year: '$year',
+              month: '$month',
+            },
+            total_balance: {
+              $sum: '$amount',
+            },
+            total_paid_balance: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ['$is_paid', true],
+                  },
+                  '$amount',
+                  0,
+                ],
+              },
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: 'categories',
+            localField: '_id.category_id',
+            foreignField: '_id',
+            as: 'category',
+          },
+        },
+        {
+          $unwind: '$category',
+        },
+        {
+          $project: {
+            category_id: '$_id.category_id',
+            type: '$_id.type',
+            description: '$category.description',
+            balance: '$total_balance',
+            balance_paid_only: '$total_paid_balance',
+            year: '$_id.year',
+            month: '$_id.month',
+          },
+        },
+        {
+          $group: {
+            _id: {
+              user_id: '$user_id',
+              year: '$year',
+              month: '$month',
+            },
+            categories: {
+              $push: {
+                category_id: '$category_id',
+                type: '$type',
+                description: '$description',
+                balance: '$balance',
+                balance_paid_only: '$balance_paid_only',
+              },
+            },
+            total_expenses: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ['$type', 'EXPENSE'],
+                  },
+                  '$balance',
+                  0,
+                ],
+              },
+            },
+            total_expenses_paid_only: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ['$type', 'EXPENSE'],
+                  },
+                  '$balance_paid_only',
+                  0,
+                ],
+              },
+            },
+            total_incomes: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ['$type', 'INCOME'],
+                  },
+                  '$balance',
+                  0,
+                ],
+              },
+            },
+            total_incomes_paid_only: {
+              $sum: {
+                $cond: [
+                  {
+                    $eq: ['$type', 'INCOME'],
+                  },
+                  '$balance_paid_only',
+                  0,
+                ],
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            user_id: '$_id.user_id',
+            year: '$_id.year',
+            month: '$_id.month',
+            expenses: '$total_expenses',
+            expenses_paid_only: '$total_expenses_paid_only',
+            incomes: '$total_incomes',
+            incomes_paid_only: '$total_incomes_paid_only',
+            categories: 1,
+          },
+        },
+      ],
+    });
+
+    return result[0];
   }
 
   async update(userId: string, transactionId: string, updateTransactionDto: UpdateTransactionDto) {

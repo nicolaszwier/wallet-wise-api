@@ -2,16 +2,11 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PeriodsRepository } from 'src/shared/database/repositories/periods.repositories';
 import { CreatePeriodDto } from '../dto/create-period.dto';
 import { ValidatePeriodOwnershipService } from './validate-period-ownership.service';
-import * as dayjs from 'dayjs';
-import * as isoWeek from 'dayjs/plugin/isoWeek';
-import * as utc from 'dayjs/plugin/utc';
 import { Period } from '@prisma/client';
 import { SortOrder } from '../model/SortOrder';
 import { PlanningsService } from 'src/modules/plannings/services/plannings.service';
 import { PeriodsRequestFilters } from '../model/PeriodsRequestFilters';
-
-dayjs.extend(isoWeek);
-dayjs.extend(utc);
+import { getEndOfWeek, getStartOfWeek } from 'src/shared/utils/utils';
 
 @Injectable()
 export class PeriodsService {
@@ -36,8 +31,8 @@ export class PeriodsService {
     try {
       await this.validatePeriodOwnershipService.validatePlanningParam(planningId);
 
-      const periodStart = this.getStartOfWeek(new Date(filters.startDate));
-      const periodEnd = this.getEndOfWeek(new Date(filters.endDate));
+      const periodStart = getStartOfWeek(new Date(filters.startDate));
+      const periodEnd = getEndOfWeek(new Date(filters.endDate));
       //todo - implement filters by transaction type and transaction status
       const periods = await this.periodsRepo.findMany({
         where: {
@@ -81,9 +76,8 @@ export class PeriodsService {
 
   async getPeriodId(userId, planningId: string, transactionDate: string) {
     const date = new Date(transactionDate);
-
-    const periodStart = this.getStartOfWeek(date);
-    const periodEnd = this.getEndOfWeek(date);
+    const periodStart = getStartOfWeek(date);
+    const periodEnd = getEndOfWeek(date);
 
     let period = await this.periodsRepo.findFirst({
       where: {
@@ -107,14 +101,6 @@ export class PeriodsService {
     }
 
     return period.id;
-  }
-
-  private getStartOfWeek(date: Date) {
-    return dayjs(date).utc().startOf('isoWeek').toDate();
-  }
-
-  private getEndOfWeek(date: Date) {
-    return dayjs(date).utc().endOf('isoWeek').toDate();
   }
 
   create(userId: string, createPeriodDto: CreatePeriodDto) {
