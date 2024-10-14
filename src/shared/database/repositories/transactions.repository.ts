@@ -11,6 +11,10 @@ export class TransactionsRepository {
     return this.prismaService.transaction.findMany(findManyDto);
   }
 
+  agregate(agregateDto: Prisma.TransactionAggregateRawArgs) {
+    return this.prismaService.transaction.aggregateRaw(agregateDto);
+  }
+
   findFirst(findFirstDto: Prisma.TransactionFindFirstArgs) {
     return this.prismaService.transaction.findFirst(findFirstDto);
   }

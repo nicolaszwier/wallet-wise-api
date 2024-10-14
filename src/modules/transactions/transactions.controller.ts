@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, Put, Query } from '@nestjs/common';
 import { TransactionsService } from './services/transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
@@ -35,6 +35,16 @@ export class TransactionsController {
   @Get('due-this-week/:planningId')
   findAllPendingDueInAWeek(@ActiveUserId() userId: string, @Param('planningId') planningId: string) {
     return this.transactionsService.findAllPendingDueInAWeek(userId, planningId);
+  }
+
+  @Get('monthly_balance/:planningId')
+  findMonthlyBalance(
+    @ActiveUserId() userId: string,
+    @Param('planningId') planningId: string,
+    @Query('month') month: string,
+    @Query('year') year: string,
+  ) {
+    return this.transactionsService.findMonthlyBalance(userId, planningId, month, year);
   }
 
   @Put(':transactionId')
