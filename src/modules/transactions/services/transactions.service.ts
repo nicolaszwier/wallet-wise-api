@@ -171,15 +171,15 @@ export class TransactionsService {
         {
           $group: {
             _id: {
-              category_id: '$category_id',
+              categoryId: '$category_id',
               type: '$type',
               year: '$year',
               month: '$month',
             },
-            total_balance: {
+            totalBalance: {
               $sum: '$amount',
             },
-            total_paid_balance: {
+            totalPaidBalance: {
               $sum: {
                 $cond: [
                   {
@@ -195,7 +195,7 @@ export class TransactionsService {
         {
           $lookup: {
             from: 'categories',
-            localField: '_id.category_id',
+            localField: '_id.categoryId',
             foreignField: '_id',
             as: 'category',
           },
@@ -205,11 +205,13 @@ export class TransactionsService {
         },
         {
           $project: {
-            category_id: '$_id.category_id',
+            categoryId: {
+              $toString: '$_id.categoryId',
+            },
             type: '$_id.type',
             description: '$category.description',
-            balance: '$total_balance',
-            balance_paid_only: '$total_paid_balance',
+            balance: '$totalBalance',
+            balancePaidOnly: '$totalPaidBalance',
             year: '$_id.year',
             month: '$_id.month',
           },
@@ -223,14 +225,14 @@ export class TransactionsService {
             },
             categories: {
               $push: {
-                category_id: '$category_id',
+                categoryId: '$categoryId',
                 type: '$type',
                 description: '$description',
                 balance: '$balance',
-                balance_paid_only: '$balance_paid_only',
+                balancePaidOnly: '$balancePaidOnly',
               },
             },
-            total_expenses: {
+            totalExpenses: {
               $sum: {
                 $cond: [
                   {
@@ -241,7 +243,7 @@ export class TransactionsService {
                 ],
               },
             },
-            total_expenses_paid_only: {
+            totalExpensesPaidOnly: {
               $sum: {
                 $cond: [
                   {
@@ -252,7 +254,7 @@ export class TransactionsService {
                 ],
               },
             },
-            total_incomes: {
+            totalIncomes: {
               $sum: {
                 $cond: [
                   {
@@ -263,7 +265,7 @@ export class TransactionsService {
                 ],
               },
             },
-            total_incomes_paid_only: {
+            totalIncomesPaidOnly: {
               $sum: {
                 $cond: [
                   {
@@ -282,10 +284,10 @@ export class TransactionsService {
             user_id: '$_id.user_id',
             year: '$_id.year',
             month: '$_id.month',
-            expenses: '$total_expenses',
-            expenses_paid_only: '$total_expenses_paid_only',
-            incomes: '$total_incomes',
-            incomes_paid_only: '$total_incomes_paid_only',
+            expenses: '$totalExpenses',
+            expensesPaidOnly: '$totalExpensesPaidOnly',
+            incomes: '$totalIncomes',
+            incomesPaidOnly: '$totalIncomesPaidOnly',
             categories: 1,
           },
         },
