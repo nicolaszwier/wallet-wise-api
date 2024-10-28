@@ -1,4 +1,4 @@
-import { TransactionType } from 'src/modules/transactions/model/Transaction';
+import { TransactionType } from 'src/modules/transactions/model/TransactionType';
 
 export const defaultCategories = [
   {

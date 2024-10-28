@@ -1,9 +1,15 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CategoriesRepository } from 'src/shared/database/repositories/categories.repositories';
 import { PeriodsRepository } from 'src/shared/database/repositories/periods.repositories';
 import { PlanningsRepository } from 'src/shared/database/repositories/plannings.repositories';
 import { TransactionsRepository } from 'src/shared/database/repositories/transactions.repository';
 import { UsersRepository } from 'src/shared/database/repositories/users.repositories';
+import { CreateSupportRequestDto } from './dto/create-user-support.dto';
+import * as dayjs from 'dayjs';
+import * as utc from 'dayjs/plugin/utc';
+import { SupportStatus } from '@prisma/client';
+
+dayjs.extend(utc);
 
 @Injectable()
 export class UsersService {
@@ -43,11 +49,34 @@ export class UsersService {
       };
     } catch (error) {
       console.log('Error on deleting account ------------', error);
-      throw {
-        statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Error on deleting account',
+      throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async createSupport(createUserSupportDto: CreateSupportRequestDto) {
+    const { email, name, message, subject, origin } = createUserSupportDto;
+
+    try {
+      await this.usersRepo.createSupport({
+        data: {
+          email,
+          name,
+          message,
+          subject,
+          origin,
+          status: SupportStatus.PENDING,
+          date: dayjs().utc(true).format(),
+        },
+      });
+
+      return {
+        statusCode: HttpStatus.CREATED,
+        message: 'created',
         error: null,
       };
+    } catch (error) {
+      console.log(error);
+      throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
     }
   }
 }

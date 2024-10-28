@@ -1,5 +1,5 @@
 import { IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsPositive, IsString } from 'class-validator';
-import { TransactionType } from '../model/Transaction';
+import { TransactionType } from '../model/TransactionType';
 // import { Category } from '../model/Category';
 
 export class CreateTransactionDto {

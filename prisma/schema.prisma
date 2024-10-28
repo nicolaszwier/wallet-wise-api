@@ -20,6 +20,12 @@ enum Currency {
   USD
 }
 
+enum SupportStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
 model Planning {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   active          Boolean
@@ -94,4 +100,17 @@ model Category {
   Transaction Transaction[]
 
   @@map("categories")
+}
+
+model SupportRequests {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  email   String
+  name    String
+  origin  String
+  subject String
+  message String
+  date    DateTime @db.Date
+  status  SupportStatus
+
+  @@map("support_requests")
 }

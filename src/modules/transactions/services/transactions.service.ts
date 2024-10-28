@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { TransactionsRepository } from 'src/shared/database/repositories/transactions.repository';
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
 import { UpdateTransactionDto } from '../dto/update-transaction.dto';
-import { TransactionType } from '../model/Transaction';
+import { TransactionType } from '../model/TransactionType';
 import { ValidateTransactionOwnershipService } from './validate-transaction-ownership.service';
 import { PeriodsService } from 'src/modules/periods/services/periods.service';
 import * as dayjs from 'dayjs';

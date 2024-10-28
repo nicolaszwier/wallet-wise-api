@@ -22,4 +22,8 @@ export class UsersRepository {
   transaction(operationsDto: Prisma.PrismaPromise<any>[]) {
     return this.prismaService.$transaction(operationsDto);
   }
+
+  createSupport(createDto: Prisma.SupportRequestsCreateArgs) {
+    return this.prismaService.supportRequests.create(createDto);
+  }
 }
