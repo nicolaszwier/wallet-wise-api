@@ -34,4 +34,8 @@ export class PeriodsRepository {
   delete(deleteDto: Prisma.PeriodDeleteArgs) {
     return this.prismaService.period.delete(deleteDto);
   }
+
+  deleteMany(deleteDto: Prisma.PeriodDeleteManyArgs) {
+    return this.prismaService.period.deleteMany(deleteDto);
+  }
 }

@@ -26,4 +26,8 @@ export class PlanningsRepository {
   delete(deleteDto: Prisma.PlanningDeleteArgs) {
     return this.prismaService.planning.delete(deleteDto);
   }
+
+  deleteMany(deleteDto: Prisma.PlanningDeleteManyArgs) {
+    return this.prismaService.planning.deleteMany(deleteDto);
+  }
 }

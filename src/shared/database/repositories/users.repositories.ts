@@ -14,4 +14,12 @@ export class UsersRepository {
   findUnique(findUniqueDto: Prisma.UserFindUniqueArgs) {
     return this.prismaService.user.findUnique(findUniqueDto);
   }
+
+  delete(deleteDto: Prisma.UserDeleteArgs) {
+    return this.prismaService.user.delete(deleteDto);
+  }
+
+  transaction(operationsDto: Prisma.PrismaPromise<any>[]) {
+    return this.prismaService.$transaction(operationsDto);
+  }
 }

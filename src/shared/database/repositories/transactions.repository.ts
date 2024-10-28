@@ -34,4 +34,8 @@ export class TransactionsRepository {
   delete(deleteDto: Prisma.TransactionDeleteArgs) {
     return this.prismaService.transaction.delete(deleteDto);
   }
+
+  deleteMany(deleteDto: Prisma.TransactionDeleteManyArgs) {
+    return this.prismaService.transaction.deleteMany(deleteDto);
+  }
 }

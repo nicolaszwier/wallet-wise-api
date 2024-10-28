@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { ActiveUserId } from 'src/shared/decorators/ActiveUserId';
 import { IsPublic } from 'src/shared/decorators/IsPublic';
@@ -11,6 +11,11 @@ export class UsersController {
   @Get('/my-profile')
   me(@ActiveUserId() userId: string) {
     return this.usersService.getUserById(userId);
+  }
+
+  @Delete('/delete-account')
+  deleteAccount(@ActiveUserId() userId: string) {
+    return this.usersService.deleteAccount(userId);
   }
 
   // @IsPublic()
