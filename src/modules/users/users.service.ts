@@ -27,14 +27,6 @@ export class UsersService {
   }
 
   async deleteAccount(userId: string) {
-    /**
-     * delete categories
-     * delete transactions
-     * delete periods
-     * delete plannings
-     * delete user
-     */
-
     try {
       await this.usersRepo.transaction([
         this.categoriesRepo.deleteMany({ where: { userId: userId } }),
