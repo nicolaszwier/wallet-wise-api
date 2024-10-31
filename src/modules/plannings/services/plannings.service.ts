@@ -21,11 +21,12 @@ export class PlanningsService {
         currentBalance: true,
         expectedBalance: true,
         dateOfCreation: true,
+        default: true,
       },
     });
   }
 
-  create(userId: string, createPlanningDto: CreatePlanningDto) {
+  create(userId: string, isDefault: boolean, createPlanningDto: CreatePlanningDto) {
     const { description, currency } = createPlanningDto;
 
     return this.planningsRepo.create({
@@ -37,26 +38,28 @@ export class PlanningsService {
         currency,
         active: true,
         dateOfCreation: new Date(),
+        default: isDefault,
       },
     });
   }
 
   async update(userId: string, planningId: string, updatePlanningDto: UpdatePlanningDto) {
     try {
-      await this.validatePlanningOwnershipService.validate(userId, planningId);
-      const { description, currency } = updatePlanningDto;
+      // await this.validatePlanningOwnershipService.validate(userId, planningId);
+      // const { description, currency } = updatePlanningDto;
       await this.planningsRepo.update({
-        where: { id: planningId },
+        // where: { id: planningId },
         data: {
-          description,
-          currency,
+          default: false,
+          // currency,
         },
-        select: {
-          id: true,
-          description: true,
-          currency: true,
-          active: true,
-        },
+        // select: {
+        //   id: true,
+        //   description: true,
+        //   currency: true,
+        //   active: true,
+        //   default: true,
+        // },
       });
 
       return {
@@ -87,7 +90,11 @@ export class PlanningsService {
   }
 
   async remove(userId: string, planningId: string) {
-    await this.validatePlanningOwnershipService.validate(userId, planningId);
+    const planning = await this.validatePlanningOwnershipService.validate(userId, planningId);
+
+    if (planning?.default) {
+      throw new HttpException('A default planning cannot be removed', HttpStatus.BAD_REQUEST);
+    }
 
     await this.planningsRepo.update({
       where: { id: planningId },

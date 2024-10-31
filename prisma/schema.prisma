@@ -32,6 +32,7 @@ model Planning {
   currency        Currency
   dateOfCreation  DateTime @map("date_of_creation")
   description     String
+  default         Boolean
   currentBalance  Float    @map("current_balance")
   expectedBalance Float    @map("expected_balance")
   userId          String   @map("user_id")

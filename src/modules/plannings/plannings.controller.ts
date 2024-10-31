@@ -15,7 +15,7 @@ export class PlanningsController {
 
   @Post()
   create(@ActiveUserId() userId: string, @Body() createPlanningDto: CreatePlanningDto) {
-    return this.planningsService.create(userId, createPlanningDto);
+    return this.planningsService.create(userId, false, createPlanningDto);
   }
 
   @Put(':planningId')

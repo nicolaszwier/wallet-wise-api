@@ -5,10 +5,16 @@ import { JwtService } from '@nestjs/jwt';
 import { SigninDto } from './dto/signin';
 import { SignupDto } from './dto/signup';
 import { defaultCategories } from 'src/shared/database/data/categories';
+import { PlanningsService } from '../plannings/services/plannings.service';
+import { CurrencyType } from '../plannings/model/Currency';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly usersRepo: UsersRepository, private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly usersRepo: UsersRepository,
+    private readonly jwtService: JwtService,
+    private readonly planningsService: PlanningsService,
+  ) {}
 
   async signin(signinDto: SigninDto) {
     const { email, password } = signinDto;
@@ -60,6 +66,8 @@ export class AuthService {
         },
       },
     });
+
+    await this.planningsService.create(user.id, true, { currency: CurrencyType.USD, description: 'Default' });
 
     const accessToken = await this.generateAccessToken(user.id);
 

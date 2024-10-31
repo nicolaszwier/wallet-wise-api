@@ -6,12 +6,14 @@ export class ValidatePlanningOwnershipService {
   constructor(private readonly planningsRepo: PlanningsRepository) {}
 
   async validate(userId: string, planningId: string) {
-    const isOwner = await this.planningsRepo.findFirst({
+    const planning = await this.planningsRepo.findFirst({
       where: { id: planningId, userId },
     });
 
-    if (!isOwner) {
+    if (!planning) {
       throw new NotFoundException('Planning not found.');
     }
+
+    return planning;
   }
 }
