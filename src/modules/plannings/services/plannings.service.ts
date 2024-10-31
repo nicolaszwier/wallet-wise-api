@@ -21,7 +21,7 @@ export class PlanningsService {
         currentBalance: true,
         expectedBalance: true,
         dateOfCreation: true,
-        default: true,
+        isDefault: true,
       },
     });
   }
@@ -38,28 +38,28 @@ export class PlanningsService {
         currency,
         active: true,
         dateOfCreation: new Date(),
-        default: isDefault,
+        isDefault: isDefault,
       },
     });
   }
 
   async update(userId: string, planningId: string, updatePlanningDto: UpdatePlanningDto) {
     try {
-      // await this.validatePlanningOwnershipService.validate(userId, planningId);
-      // const { description, currency } = updatePlanningDto;
+      await this.validatePlanningOwnershipService.validate(userId, planningId);
+      const { description, currency } = updatePlanningDto;
       await this.planningsRepo.update({
-        // where: { id: planningId },
+        where: { id: planningId },
         data: {
-          default: false,
-          // currency,
+          description,
+          currency,
         },
-        // select: {
-        //   id: true,
-        //   description: true,
-        //   currency: true,
-        //   active: true,
-        //   default: true,
-        // },
+        select: {
+          id: true,
+          description: true,
+          currency: true,
+          active: true,
+          isDefault: true,
+        },
       });
 
       return {
@@ -92,7 +92,7 @@ export class PlanningsService {
   async remove(userId: string, planningId: string) {
     const planning = await this.validatePlanningOwnershipService.validate(userId, planningId);
 
-    if (planning?.default) {
+    if (planning?.isDefault) {
       throw new HttpException('A default planning cannot be removed', HttpStatus.BAD_REQUEST);
     }
 

@@ -19,8 +19,8 @@ export class PlanningsRepository {
     return this.prismaService.planning.create(createDto);
   }
 
-  update(updateDto: Prisma.PlanningUpdateManyArgs) {
-    return this.prismaService.planning.updateMany(updateDto);
+  update(updateDto: Prisma.PlanningUpdateArgs) {
+    return this.prismaService.planning.update(updateDto);
   }
 
   delete(deleteDto: Prisma.PlanningDeleteArgs) {
