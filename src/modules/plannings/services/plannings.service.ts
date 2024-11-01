@@ -3,12 +3,15 @@ import { PlanningsRepository } from 'src/shared/database/repositories/plannings.
 import { CreatePlanningDto } from '../dto/create-planning.dto';
 import { ValidatePlanningOwnershipService } from './validate-planning-ownership.service';
 import { UpdatePlanningDto } from '../dto/update-planning.dto';
+import { currenciesList } from 'src/shared/database/data/currencies';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class PlanningsService {
   constructor(
     private readonly planningsRepo: PlanningsRepository,
     private readonly validatePlanningOwnershipService: ValidatePlanningOwnershipService,
+    private readonly i18n: I18nService,
   ) {}
 
   findAllByUserId(userId: string) {
@@ -108,5 +111,13 @@ export class PlanningsService {
       message: 'removed',
       error: null,
     };
+  }
+
+  findAllCurrencies() {
+    return currenciesList.map((el) => {
+      return {
+        [el]: this.i18n.t(`currencies.currency.${el}`, { lang: I18nContext.current().lang }),
+      };
+    });
   }
 }

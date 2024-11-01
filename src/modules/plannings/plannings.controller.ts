@@ -36,4 +36,9 @@ export class PlanningsController {
   ) {
     return this.planningsService.remove(userId, planningId);
   }
+
+  @Get('currencies')
+  findAllCurrencies() {
+    return this.planningsService.findAllCurrencies();
+  }
 }
