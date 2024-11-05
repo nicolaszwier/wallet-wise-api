@@ -7,6 +7,6 @@ export class CreatePlanningDto {
   description: string;
 
   @IsNotEmpty()
-  @IsEnum(CurrencyType)
+  @IsString()
   currency: CurrencyType;
 }

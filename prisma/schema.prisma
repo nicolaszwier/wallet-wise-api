@@ -12,14 +12,6 @@ enum TransactionType {
   EXPENSE
 }
 
-enum Currency {
-  BRL
-  CAD
-  EUR
-  GBP
-  USD
-}
-
 enum SupportStatus {
   PENDING
   IN_PROGRESS
@@ -29,7 +21,7 @@ enum SupportStatus {
 model Planning {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   active          Boolean
-  currency        Currency
+  currency        String
   dateOfCreation  DateTime @map("date_of_creation")
   description     String
   isDefault       Boolean  @map("default")
