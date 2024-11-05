@@ -7,6 +7,7 @@ import { SignupDto } from './dto/signup';
 import { defaultCategories } from 'src/shared/database/data/categories';
 import { PlanningsService } from '../plannings/services/plannings.service';
 import { CurrencyType } from '../plannings/model/Currency';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +15,7 @@ export class AuthService {
     private readonly usersRepo: UsersRepository,
     private readonly jwtService: JwtService,
     private readonly planningsService: PlanningsService,
+    private readonly i18n: I18nService,
   ) {}
 
   async signin(signinDto: SigninDto) {
@@ -67,7 +69,7 @@ export class AuthService {
       },
     });
 
-    await this.planningsService.create(user.id, true, { currency: CurrencyType.USD, description: 'Default' });
+    await this.planningsService.create(user.id, true, { currency: CurrencyType.USD, description: this.i18n.t(`plannings.defaultPlanningName`, { lang: I18nContext.current().lang }) });
 
     const accessToken = await this.generateAccessToken(user.id);
 
