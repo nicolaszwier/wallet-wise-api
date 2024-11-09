@@ -1,0 +1,20 @@
+{
+  "income": "Income",
+  "others": "Others",
+  "creditCard": "Credit card",
+  "dining": "Dining",
+  "education": "Education",
+  "entertainment": "Entertainment",
+  "taxes": "Taxes",
+  "gifts": "Gifts",
+  "groceries": "Groceries",
+  "health": "Health",
+  "insurance": "Insurance",
+  "rent": "Rent",
+  "savings": "Savings",
+  "shopping": "Shopping",
+  "subscriptions": "Subscriptions",
+  "transportation": "Transportation",
+  "travel": "Travel",
+  "utilities": "Utilities"
+}
