@@ -29,6 +29,7 @@ export class UsersService {
       select: {
         name: true,
         email: true,
+        picture: true,
         categories: { orderBy: { description: 'asc' } },
       },
     }) as unknown as {

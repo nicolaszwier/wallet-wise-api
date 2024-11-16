@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { SigninDto } from './dto/signin';
 import { SignupDto } from './dto/signup';
 import { IsPublic } from 'src/shared/decorators/IsPublic';
+import { GoogleDto } from './dto/google';
 
 @IsPublic()
 @Controller('api/auth')
@@ -17,5 +18,10 @@ export class AuthController {
   @Post('signup')
   signup(@Body() signupDto: SignupDto) {
     return this.authService.signup(signupDto);
+  }
+
+  @Post('google')
+  google(@Body() googleDto: GoogleDto) {
+    return this.authService.signInWithGoogle(googleDto);
   }
 }
