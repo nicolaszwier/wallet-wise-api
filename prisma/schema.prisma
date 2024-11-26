@@ -73,8 +73,11 @@ model User {
   dateOfCreation DateTime @map("date_of_creation")
   email          String   @unique
   name           String
-  password       String
+  password       String?
   language       String?
+  googleId       String?
+  locale         String?
+  picture        String?
 
   categories Category[]
 

@@ -2,11 +2,18 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PeriodsRepository } from 'src/shared/database/repositories/periods.repositories';
 import { CreatePeriodDto } from '../dto/create-period.dto';
 import { ValidatePeriodOwnershipService } from './validate-period-ownership.service';
-import { Period } from '@prisma/client';
+import { Category, Period, Transaction } from '@prisma/client';
 import { SortOrder } from '../model/SortOrder';
 import { PlanningsService } from 'src/modules/plannings/services/plannings.service';
 import { PeriodsRequestFilters } from '../model/PeriodsRequestFilters';
 import { getEndOfWeek, getStartOfWeek } from 'src/shared/utils/utils';
+import { I18nService, I18nContext } from 'nestjs-i18n';
+
+type PeriodResponse = Period & {
+  transactions: (Transaction & {
+    category: Category
+  })[];
+}
 
 @Injectable()
 export class PeriodsService {
@@ -14,6 +21,7 @@ export class PeriodsService {
     private readonly periodsRepo: PeriodsRepository,
     private readonly validatePeriodOwnershipService: ValidatePeriodOwnershipService,
     private readonly planningsService: PlanningsService,
+    private readonly i18n: I18nService,
   ) {}
 
   async findAllByUserId(
@@ -45,20 +53,29 @@ export class PeriodsService {
         include: {
           transactions: filters.includeTransactions ? { include: { category: true } } : false,
         },
-      });
+      }) as unknown as PeriodResponse[];
 
       // Prisma currently does not support ordering nested relations directly in MongoDB so it's necessary to do on code level
       if (filters.includeTransactions) {
         periods?.forEach((period) => {
-          (
-            period as Period & {
-              transactions: [{ date: Date }];
-            }
-          ).transactions.sort((a, b) => Date.parse(a.date.toString()) - Date.parse(b.date.toString()));
+          period.transactions.sort((a, b) => Date.parse(a.date.toString()) - Date.parse(b.date.toString()));
         });
       }
 
-      return periods || [];
+      return periods.map(period => {
+        return {
+          ...period,
+          transactions: period.transactions.map(el => {
+            return {
+              ...el,
+              category: {
+                ...el.category,
+                description: this.i18n.t(`categories.${el.category.description}`, { lang: I18nContext.current().lang }),
+              }
+            }
+          })
+        }
+      }) || [];
     } catch (error) {
       console.log(error);
       throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
@@ -74,7 +91,7 @@ export class PeriodsService {
     });
   }
 
-  findManyByPeriodIds(periodIds: string[]) {
+  private findManyByPeriodIds(periodIds: string[]) {
     return this.periodsRepo.findMany({
       where: { id: { in: periodIds } },
       include: {

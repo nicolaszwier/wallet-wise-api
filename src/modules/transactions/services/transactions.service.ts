@@ -8,8 +8,16 @@ import { PeriodsService } from 'src/modules/periods/services/periods.service';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { getEndOfMonth, getStartOfMonth } from 'src/shared/utils/utils';
+import { I18nService, I18nContext } from 'nestjs-i18n';
+import { Category, Transaction } from '@prisma/client';
+import { MonthlyBalance } from '../model/Balance';
 
 dayjs.extend(utc);
+
+type TransactionResponse = Transaction & {
+  category: Category
+}
+type MonthlyBalanceResponse = MonthlyBalance;
 
 @Injectable()
 export class TransactionsService {
@@ -17,6 +25,7 @@ export class TransactionsService {
     private readonly transactionsRepo: TransactionsRepository,
     private readonly validateTransactionOwnershipService: ValidateTransactionOwnershipService,
     private readonly periodsService: PeriodsService,
+    private readonly i18n: I18nService,
   ) {}
 
   async create(userId: string, createTransactionDto: CreateTransactionDto) {
@@ -123,8 +132,8 @@ export class TransactionsService {
     });
   }
 
-  findAllPendingDueInAWeek(userId: string, planningId: string) {
-    return this.transactionsRepo.findMany({
+  async findAllPendingDueInAWeek(userId: string, planningId: string) {
+    const response = await this.transactionsRepo.findMany({
       where: {
         userId,
         planningId: planningId,
@@ -133,7 +142,17 @@ export class TransactionsService {
       },
       include: { category: true },
       orderBy: { date: 'asc' },
-    });
+    }) as TransactionResponse[];
+
+    return response.map(el => {
+      return {
+        ...el,
+        category: {
+          ...el.category,
+          description: this.i18n.t(`categories.${el.category.description}`, { lang: I18nContext.current().lang }),
+        }
+      }
+    }) || []
   }
 
   // if month and year are not passed, return the balance for the current month
@@ -294,9 +313,21 @@ export class TransactionsService {
           },
         },
       ],
-    });
+    }) as unknown as MonthlyBalanceResponse[];
 
-    return result[0];
+    if (result && result?.length === 0) {
+      return null
+    }
+    
+    return {
+      ...result[0],
+      categories:  result[0]?.categories.map(el => {
+        return {
+          ...el,
+          description: this.i18n.t(`categories.${el.description}`, { lang: I18nContext.current().lang }),
+        }
+      })       
+    } as MonthlyBalanceResponse;
   }
 
   async update(userId: string, transactionId: string, updateTransactionDto: UpdateTransactionDto) {

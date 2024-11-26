@@ -7,7 +7,8 @@ import { UsersRepository } from 'src/shared/database/repositories/users.reposito
 import { CreateSupportRequestDto } from './dto/create-user-support.dto';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
-import { SupportStatus } from '@prisma/client';
+import { Category, SupportStatus } from '@prisma/client';
+import { I18nContext, I18nService } from 'nestjs-i18n';
 
 dayjs.extend(utc);
 
@@ -19,17 +20,33 @@ export class UsersService {
     private readonly transactionsRepo: TransactionsRepository,
     private readonly periodsRepo: PeriodsRepository,
     private readonly planningsRepo: PlanningsRepository,
+    private readonly i18n: I18nService,
   ) {}
 
-  getUserById(userId: string) {
-    return this.usersRepo.findUnique({
+  async getUserById(userId: string) {
+    const result = await  this.usersRepo.findUnique({
       where: { id: userId },
       select: {
         name: true,
         email: true,
+        picture: true,
         categories: { orderBy: { description: 'asc' } },
       },
-    });
+    }) as unknown as {
+      name: string,
+      email: string,
+      categories: Category[]
+    };
+
+    return {
+      ...result,
+      categories: result?.categories?.map(el => {
+        return {
+          ...el,
+          description: this.i18n.t(`categories.${el.description}`, { lang: I18nContext.current().lang })
+        }
+      }) 
+    }
   }
 
   async deleteAccount(userId: string) {

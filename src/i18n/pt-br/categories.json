@@ -1,0 +1,20 @@
+{
+  "income": "Receitas",
+  "others": "Outros",
+  "creditCard": "Cartão de crédito",
+  "dining": "Restaurantes",
+  "entertainment": "Entretenimento",
+  "education": "Educação",
+  "taxes": "Impostos",
+  "gifts": "Presentes",
+  "groceries": "Mercado",
+  "health": "Saúde",
+  "insurance": "Seguro",
+  "rent": "Aluguel",
+  "savings": "Investimentos",
+  "shopping": "Compras",
+  "subscriptions": "Assinaturas",
+  "transportation": "Transporte",
+  "travel": "Viagens",
+  "utilities": "Despesas domésticas"
+}
