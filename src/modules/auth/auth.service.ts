@@ -98,7 +98,7 @@ export class AuthService {
       const payload = ticket.getPayload();
       return payload;
     } catch (error) {
-      throw new Error('Invalid Google token');
+      throw new UnauthorizedException('Invalid Google token');
     }
   }
 
