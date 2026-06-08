@@ -27,11 +27,6 @@ export class TransactionsController {
     return this.transactionsService.pay(userId, periodId, transactionId);
   }
 
-  @Get(':periodId')
-  findAll(@ActiveUserId() userId: string, @Param('periodId') periodId: string) {
-    return this.transactionsService.findAllByUserId(userId, { periodId });
-  }
-
   @Get('due-this-week/:planningId')
   findAllPendingDueInAWeek(@ActiveUserId() userId: string, @Param('planningId') planningId: string) {
     return this.transactionsService.findAllPendingDueInAWeek(userId, planningId);
@@ -45,6 +40,11 @@ export class TransactionsController {
     @Query('year') year: string,
   ) {
     return this.transactionsService.findMonthlyBalance(userId, planningId, month, year);
+  }
+
+  @Get(':periodId')
+  findAll(@ActiveUserId() userId: string, @Param('periodId') periodId: string) {
+    return this.transactionsService.findAllByUserId(userId, { periodId });
   }
 
   @Put(':transactionId')
