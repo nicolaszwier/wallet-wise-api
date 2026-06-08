@@ -76,6 +76,7 @@ model User {
   password       String?
   language       String?
   googleId       String?
+  appleId        String?
   locale         String?
   picture        String?
 

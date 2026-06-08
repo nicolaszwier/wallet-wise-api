@@ -316,7 +316,15 @@ export class TransactionsService {
     }) as unknown as MonthlyBalanceResponse[];
 
     if (result && result?.length === 0) {
-      return null
+      return { 
+        year: year,
+        month: month,
+        expenses: 0,
+        expensesPaidOnly: 0,
+        incomes: 0,
+        incomesPaidOnly: 0,
+        categories: [],
+      } as MonthlyBalanceResponse;
     }
     
     return {
