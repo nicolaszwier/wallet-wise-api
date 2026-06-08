@@ -9,7 +9,9 @@ import { PlanningsService } from '../plannings/services/plannings.service';
 import { CurrencyType } from '../plannings/model/Currency';
 import { I18nContext, I18nService } from 'nestjs-i18n';
 import { OAuth2Client } from 'google-auth-library';
+import appleSignin from 'apple-signin-auth';
 import { GoogleDto } from './dto/google';
+import { AppleDto } from './dto/apple';
 
 @Injectable()
 export class AuthService {
@@ -139,6 +141,64 @@ export class AuthService {
           locale: googleUser.locale,
           picture: googleUser.picture,
         }
+      });
+    }
+
+    const accessToken = await this.generateAccessToken(user.id);
+
+    return { accessToken };
+  }
+
+  async validateAppleToken(token: string) {
+    try {
+      const payload = await appleSignin.verifyIdToken(token, {
+        audience: [process.env.APPLE_CLIENT_ID, process.env.APPLE_CLIENT_ID_IOS],
+      });
+      return payload;
+    } catch (error) {
+      throw new UnauthorizedException('Invalid Apple token');
+    }
+  }
+
+  async signInWithApple(appleDto: AppleDto) {
+    const appleUser = await this.validateAppleToken(appleDto.token);
+
+    let user = await this.usersRepo.findFirst({
+      where: { appleId: appleUser.sub },
+    });
+
+    if (!user && appleUser.email) {
+      user = await this.usersRepo.findUnique({
+        where: { email: appleUser.email },
+      });
+    }
+
+    if (!user) {
+      if (!appleUser.email) {
+        throw new UnauthorizedException('Invalid Apple token');
+      }
+
+      user = await this.usersRepo.create({
+        data: {
+          appleId: appleUser.sub,
+          name: appleDto.name ?? appleUser.email.split('@')[0],
+          email: appleUser.email,
+          active: true,
+          dateOfCreation: new Date(),
+          categories: {
+            createMany: {
+              data: defaultCategories,
+            },
+          },
+        },
+      });
+      await this.planningsService.create(user.id, true, { currency: CurrencyType.USD, description: this.i18n.t(`plannings.defaultPlanningName`, { lang: I18nContext.current().lang }) });
+    } else if (!user.appleId) {
+      await this.usersRepo.update({
+        where: { id: user.id },
+        data: {
+          appleId: appleUser.sub,
+        },
       });
     }
 
