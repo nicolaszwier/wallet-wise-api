@@ -12,7 +12,7 @@ export class RecurringForecastCronService {
     private readonly recurringGenerationService: RecurringGenerationService,
   ) {}
 
-  @Cron('0 0 * * *')
+  @Cron('0 0 * * *', { name: 'maintainRecurringForecasts' })
   async maintainForecasts() {
     const activeConfigs = await this.recurringConfigsRepo.findMany({
       where: { active: true },

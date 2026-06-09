@@ -18,17 +18,17 @@ export class RecurringConfigsController {
     return this.recurringConfigsService.checkForecastHealth(userId);
   }
 
-  @Get('detail/:configId')
+  @Get('detail/:configId([a-f0-9]{24})')
   findOne(@ActiveUserId() userId: string, @Param('configId') configId: string) {
     return this.recurringConfigsService.findOne(userId, configId);
   }
 
-  @Get(':planningId')
+  @Get(':planningId([a-f0-9]{24})')
   findAll(@ActiveUserId() userId: string, @Param('planningId') planningId: string) {
     return this.recurringConfigsService.findAllByPlanning(userId, planningId);
   }
 
-  @Put(':configId')
+  @Put(':configId([a-f0-9]{24})')
   update(
     @ActiveUserId() userId: string,
     @Param('configId') configId: string,
@@ -37,7 +37,7 @@ export class RecurringConfigsController {
     return this.recurringConfigsService.update(userId, configId, dto);
   }
 
-  @Delete(':configId')
+  @Delete(':configId([a-f0-9]{24})')
   remove(@ActiveUserId() userId: string, @Param('configId') configId: string) {
     return this.recurringConfigsService.remove(userId, configId);
   }
