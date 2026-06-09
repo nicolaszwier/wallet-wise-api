@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CategoriesRepository } from 'src/shared/database/repositories/categories.repositories';
 import { PeriodsRepository } from 'src/shared/database/repositories/periods.repositories';
 import { PlanningsRepository } from 'src/shared/database/repositories/plannings.repositories';
+import { RecurringConfigsRepository } from 'src/shared/database/repositories/recurring-configs.repository';
 import { TransactionsRepository } from 'src/shared/database/repositories/transactions.repository';
 import { UsersRepository } from 'src/shared/database/repositories/users.repositories';
 import { CreateSupportRequestDto } from './dto/create-user-support.dto';
@@ -20,6 +21,7 @@ export class UsersService {
     private readonly transactionsRepo: TransactionsRepository,
     private readonly periodsRepo: PeriodsRepository,
     private readonly planningsRepo: PlanningsRepository,
+    private readonly recurringConfigsRepo: RecurringConfigsRepository,
     private readonly i18n: I18nService,
   ) {}
 
@@ -54,6 +56,7 @@ export class UsersService {
       await this.usersRepo.transaction([
         this.categoriesRepo.deleteMany({ where: { userId: userId } }),
         this.transactionsRepo.deleteMany({ where: { userId: userId } }),
+        this.recurringConfigsRepo.deleteMany({ where: { userId: userId } }),
         this.periodsRepo.deleteMany({ where: { userId: userId } }),
         this.planningsRepo.deleteMany({ where: { userId: userId } }),
         this.usersRepo.delete({ where: { id: userId } }),

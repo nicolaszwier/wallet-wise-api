@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { RecurringConfigsService } from 'src/modules/recurring-configs/services/recurring-configs.service';
 import { TransactionsRepository } from 'src/shared/database/repositories/transactions.repository';
 import { CreateTransactionDto } from '../dto/create-transaction.dto';
 import { UpdateTransactionDto } from '../dto/update-transaction.dto';
@@ -7,7 +8,7 @@ import { ValidateTransactionOwnershipService } from './validate-transaction-owne
 import { PeriodsService } from 'src/modules/periods/services/periods.service';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
-import { getEndOfMonth, getStartOfMonth } from 'src/shared/utils/utils';
+import { getEndOfMonth, getStartOfMonth, toCalendarDateStorage } from 'src/shared/utils/utils';
 import { I18nService, I18nContext } from 'nestjs-i18n';
 import { Category, Transaction } from '@prisma/client';
 import { MonthlyBalance } from '../model/Balance';
@@ -26,17 +27,30 @@ export class TransactionsService {
     private readonly validateTransactionOwnershipService: ValidateTransactionOwnershipService,
     private readonly periodsService: PeriodsService,
     private readonly i18n: I18nService,
+    private readonly recurringConfigsService: RecurringConfigsService,
   ) {}
 
   async create(userId: string, createTransactionDto: CreateTransactionDto) {
-    const { planningId, categoryId, description, amount, date, isPaid, type } = createTransactionDto;
+    const {
+      planningId,
+      categoryId,
+      description,
+      amount,
+      date,
+      isPaid,
+      type,
+      isRecurring,
+      frequency,
+      endDate,
+    } = createTransactionDto;
 
     try {
       await this.validateEntitiesOwnership({
         userId,
       });
-      const periodId = await this.periodsService.getPeriodId(userId, planningId, date);
-      await this.transactionsRepo.create({
+      const normalizedDate = toCalendarDateStorage(date);
+      const periodId = await this.periodsService.getPeriodId(userId, planningId, normalizedDate.toISOString());
+      const transaction = await this.transactionsRepo.create({
         data: {
           userId,
           planningId,
@@ -45,20 +59,45 @@ export class TransactionsService {
           description,
           amount: type === TransactionType.EXPENSE ? amount * -1 : amount,
           type,
-          date: dayjs(date).utc().format(),
+          date: normalizedDate,
           isPaid,
           dateCreated: dayjs().utc(true).format(),
         },
       });
+
+      const periodIds = new Set<string>([periodId]);
+
+      if (isRecurring && frequency) {
+        const { affectedPeriodIds } = await this.recurringConfigsService.createFromTransaction(
+          userId,
+          transaction,
+          { frequency, endDate },
+        );
+        affectedPeriodIds.forEach((id) => periodIds.add(id));
+
+        const updated = await this.transactionsRepo.findFirst({ where: { id: transaction.id } });
+        await this.periodsService.recalculateBalances(userId, Array.from(periodIds));
+
+        return {
+          statusCode: HttpStatus.CREATED,
+          message: 'created',
+          data: updated ?? transaction,
+          error: null,
+        };
+      }
 
       await this.periodsService.recalculateBalances(userId, [periodId]);
 
       return {
         statusCode: HttpStatus.CREATED,
         message: 'created',
+        data: transaction,
         error: null,
       };
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       console.log(error);
       throw new HttpException('Something wrong happened', HttpStatus.BAD_REQUEST);
     }

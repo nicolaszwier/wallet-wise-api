@@ -1,5 +1,4 @@
 import {
-  IsBoolean,
   IsDateString,
   IsEnum,
   IsNotEmpty,
@@ -7,13 +6,11 @@ import {
   IsOptional,
   IsPositive,
   IsString,
-  ValidateIf,
 } from 'class-validator';
-import { RecurrenceFrequency } from 'src/modules/recurring-configs/model/RecurrenceFrequency';
-import { TransactionType } from '../model/TransactionType';
-// import { Category } from '../model/Category';
+import { RecurrenceFrequency } from '../model/RecurrenceFrequency';
+import { TransactionType } from 'src/modules/transactions/model/TransactionType';
 
-export class CreateTransactionDto {
+export class CreateRecurringConfigDto {
   @IsString()
   @IsNotEmpty()
   planningId: string;
@@ -32,25 +29,16 @@ export class CreateTransactionDto {
   amount: number;
 
   @IsNotEmpty()
-  @IsDateString()
-  date: string;
-
-  @IsNotEmpty()
-  @IsBoolean()
-  isPaid: boolean;
-
-  @IsNotEmpty()
   @IsEnum(TransactionType)
   type: TransactionType;
 
-  @IsOptional()
-  @IsBoolean()
-  isRecurring?: boolean;
-
-  @ValidateIf((o) => o.isRecurring === true)
   @IsNotEmpty()
   @IsEnum(RecurrenceFrequency)
-  frequency?: RecurrenceFrequency;
+  frequency: RecurrenceFrequency;
+
+  @IsNotEmpty()
+  @IsDateString()
+  startDate: string;
 
   @IsOptional()
   @IsDateString()

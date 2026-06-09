@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 
@@ -10,9 +11,11 @@ import { AuthGuard } from './modules/auth/auth.guard';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { PlanningsModule } from './modules/plannings/plannings.module';
 import { PeriodsModule } from './modules/periods/periods.module';
+import { RecurringConfigsModule } from './modules/recurring-configs/recurring-configs.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     I18nModule.forRoot({
       fallbackLanguage: 'en',
       loaderOptions: {
@@ -27,6 +30,7 @@ import { PeriodsModule } from './modules/periods/periods.module';
     PlanningsModule,
     PeriodsModule,
     TransactionsModule,
+    RecurringConfigsModule,
   ],
   controllers: [],
   providers: [

@@ -18,6 +18,12 @@ enum SupportStatus {
   DONE
 }
 
+enum RecurrenceFrequency {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
 model Planning {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   active          Boolean
@@ -49,22 +55,45 @@ model Period {
 }
 
 model Transaction {
-  id          String          @id @default(auto()) @map("_id") @db.ObjectId
-  periodId    String          @map("period_id") @db.ObjectId
-  planningId  String          @map("planning_id") @db.ObjectId
-  categoryId  String          @map("category_id") @db.ObjectId
-  userId      String          @map("user_id")
-  amount      Float
-  date        DateTime        @db.Date
-  dateCreated DateTime        @map("date_created") @db.Date
-  description String
-  isPaid      Boolean         @map("is_paid")
-  type        TransactionType
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  periodId          String          @map("period_id") @db.ObjectId
+  planningId        String          @map("planning_id") @db.ObjectId
+  categoryId        String          @map("category_id") @db.ObjectId
+  userId            String          @map("user_id")
+  amount            Float
+  date              DateTime        @db.Date
+  dateCreated       DateTime        @map("date_created") @db.Date
+  description       String
+  isPaid            Boolean         @map("is_paid")
+  type              TransactionType
+  recurringConfigId String?         @map("recurring_config_id") @db.ObjectId
 
-  category Category @relation(fields: [categoryId], references: [id])
-  period   Period   @relation(fields: [periodId], references: [id])
+  category        Category         @relation(fields: [categoryId], references: [id])
+  period          Period           @relation(fields: [periodId], references: [id])
+  recurringConfig RecurringConfig? @relation(fields: [recurringConfigId], references: [id])
 
   @@map("transactions")
+}
+
+model RecurringConfig {
+  id                String              @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String              @map("user_id")
+  planningId        String              @map("planning_id") @db.ObjectId
+  categoryId        String              @map("category_id") @db.ObjectId
+  amount            Float
+  description       String
+  type              TransactionType
+  frequency         RecurrenceFrequency
+  startDate         DateTime            @map("start_date") @db.Date
+  endDate           DateTime?           @map("end_date") @db.Date
+  recurringDay      Int                 @map("recurring_day")
+  lastGeneratedDate DateTime?           @map("last_generated_date") @db.Date
+  active            Boolean
+  dateCreated       DateTime            @map("date_created") @db.Date
+
+  transactions Transaction[]
+
+  @@map("recurring_configs")
 }
 
 model User {
@@ -100,13 +129,13 @@ model Category {
 }
 
 model SupportRequests {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  id      String        @id @default(auto()) @map("_id") @db.ObjectId
   email   String
   name    String
   origin  String
   subject String
   message String
-  date    DateTime @db.Date
+  date    DateTime      @db.Date
   status  SupportStatus
 
   @@map("support_requests")

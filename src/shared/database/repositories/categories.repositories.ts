@@ -7,6 +7,10 @@ import { PrismaService } from '../prisma.service';
 export class CategoriesRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
+  findFirst(findFirstDto: Prisma.CategoryFindFirstArgs) {
+    return this.prismaService.category.findFirst(findFirstDto);
+  }
+
   deleteMany(deleteDto: Prisma.CategoryDeleteManyArgs) {
     return this.prismaService.category.deleteMany(deleteDto);
   }
