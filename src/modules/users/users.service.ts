@@ -54,10 +54,10 @@ export class UsersService {
   async deleteAccount(userId: string) {
     try {
       await this.usersRepo.transaction([
-        this.categoriesRepo.deleteMany({ where: { userId: userId } }),
         this.transactionsRepo.deleteMany({ where: { userId: userId } }),
         this.recurringConfigsRepo.deleteMany({ where: { userId: userId } }),
         this.periodsRepo.deleteMany({ where: { userId: userId } }),
+        this.categoriesRepo.deleteMany({ where: { userId: userId } }),
         this.planningsRepo.deleteMany({ where: { userId: userId } }),
         this.usersRepo.delete({ where: { id: userId } }),
       ]);
