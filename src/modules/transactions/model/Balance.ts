@@ -12,6 +12,7 @@ export interface MonthlyBalance {
 
 interface BalanceCategory {
   categoryId: string,
+  parentCategoryId?: string | null,
   type: TransactionType,
   description: string,
   icon: string,

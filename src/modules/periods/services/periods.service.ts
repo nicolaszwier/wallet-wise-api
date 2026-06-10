@@ -8,6 +8,7 @@ import { PlanningsService } from 'src/modules/plannings/services/plannings.servi
 import { PeriodsRequestFilters } from '../model/PeriodsRequestFilters';
 import { getEndOfWeek, getStartOfWeek } from 'src/shared/utils/utils';
 import { I18nService, I18nContext } from 'nestjs-i18n';
+import { resolveCategoryDescription } from 'src/shared/utils/category-display.util';
 
 type PeriodResponse = Period & {
   transactions: (Transaction & {
@@ -63,6 +64,8 @@ export class PeriodsService {
       }
 
       return periods.map(period => {
+        const lang = I18nContext.current()?.lang ?? 'en';
+
         return {
           ...period,
           transactions: period.transactions.map(el => {
@@ -70,7 +73,7 @@ export class PeriodsService {
               ...el,
               category: {
                 ...el.category,
-                description: this.i18n.t(`categories.${el.category.description}`, { lang: I18nContext.current().lang }),
+                description: resolveCategoryDescription(el.category, this.i18n, lang),
               }
             }
           })

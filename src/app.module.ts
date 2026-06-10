@@ -12,6 +12,7 @@ import { TransactionsModule } from './modules/transactions/transactions.module';
 import { PlanningsModule } from './modules/plannings/plannings.module';
 import { PeriodsModule } from './modules/periods/periods.module';
 import { RecurringConfigsModule } from './modules/recurring-configs/recurring-configs.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { RecurringConfigsModule } from './modules/recurring-configs/recurring-co
     PeriodsModule,
     TransactionsModule,
     RecurringConfigsModule,
+    CategoriesModule,
   ],
   controllers: [],
   providers: [

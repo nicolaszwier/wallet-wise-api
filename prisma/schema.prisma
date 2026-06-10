@@ -24,6 +24,11 @@ enum RecurrenceFrequency {
   YEARLY
 }
 
+enum CategorySource {
+  SEED
+  CUSTOM
+}
+
 model Planning {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   active          Boolean
@@ -115,16 +120,23 @@ model User {
 }
 
 model Category {
-  id          String          @id @default(auto()) @map("_id") @db.ObjectId
-  userId      String?         @map("user_id") @db.ObjectId
-  active      Boolean
-  description String
-  icon        String
-  color       String
-  type        TransactionType
-  User        User?           @relation(fields: [userId], references: [id])
-  Transaction Transaction[]
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String?         @map("user_id") @db.ObjectId
+  parentCategoryId String?         @map("parent_category_id") @db.ObjectId
+  source           CategorySource  @default(SEED)
+  active           Boolean
+  description      String
+  customLabel      String?         @map("custom_label")
+  icon             String
+  color            String
+  type             TransactionType
+  User             User?           @relation(fields: [userId], references: [id])
+  Transaction      Transaction[]
+  parent           Category?       @relation("CategoryChildren", fields: [parentCategoryId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children         Category[]      @relation("CategoryChildren")
 
+  @@index([userId, parentCategoryId])
+  @@index([userId, active])
   @@map("categories")
 }
 
