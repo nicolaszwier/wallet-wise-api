@@ -1,11 +1,11 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { RecurrenceFrequency, Transaction, TransactionType } from '@prisma/client';
 import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
-import { CategoriesRepository } from 'src/shared/database/repositories/categories.repositories';
 import { RecurringConfigsRepository } from 'src/shared/database/repositories/recurring-configs.repository';
 import { TransactionsRepository } from 'src/shared/database/repositories/transactions.repository';
 import { ValidatePlanningOwnershipService } from 'src/modules/plannings/services/validate-planning-ownership.service';
+import { ValidateCategoryService } from 'src/modules/categories/services/validate-category.service';
 import { getForecastHorizonFromToday, parseCalendarDate, toCalendarDateStorage } from 'src/shared/utils/utils';
 import { CreateRecurringConfigDto } from '../dto/create-recurring-config.dto';
 import { UpdateRecurringConfigDto } from '../dto/update-recurring-config.dto';
@@ -19,7 +19,7 @@ dayjs.extend(utc);
 export class RecurringConfigsService {
   constructor(
     private readonly recurringConfigsRepo: RecurringConfigsRepository,
-    private readonly categoriesRepo: CategoriesRepository,
+    private readonly validateCategoryService: ValidateCategoryService,
     private readonly validatePlanningOwnershipService: ValidatePlanningOwnershipService,
     private readonly validateRecurringOwnershipService: ValidateRecurringOwnershipService,
     private readonly recurringGenerationService: RecurringGenerationService,
@@ -30,7 +30,7 @@ export class RecurringConfigsService {
   async create(userId: string, dto: CreateRecurringConfigDto) {
     try {
       await this.validatePlanningOwnershipService.validate(userId, dto.planningId);
-      await this.validateCategory(userId, dto.categoryId, dto.type);
+      await this.validateCategoryService.validateForTransaction(userId, dto.categoryId, dto.type);
 
       const startDate = parseCalendarDate(dto.startDate);
       const recurringDay = startDate.date();
@@ -77,7 +77,7 @@ export class RecurringConfigsService {
     options: { frequency: RecurrenceFrequency; endDate?: string },
   ) {
     await this.validatePlanningOwnershipService.validate(userId, transaction.planningId);
-    await this.validateCategory(userId, transaction.categoryId, transaction.type);
+    await this.validateCategoryService.validateForTransaction(userId, transaction.categoryId, transaction.type);
 
     const startDate = parseCalendarDate(transaction.date);
     const recurringDay = startDate.date();
@@ -135,7 +135,7 @@ export class RecurringConfigsService {
 
       const type = dto.type ?? existing.type;
       if (dto.categoryId) {
-        await this.validateCategory(userId, dto.categoryId, type);
+        await this.validateCategoryService.validateForTransaction(userId, dto.categoryId, type);
       }
 
       const startDate = dto.startDate ? parseCalendarDate(dto.startDate) : parseCalendarDate(existing.startDate);
@@ -235,19 +235,5 @@ export class RecurringConfigsService {
       nextGenerationDate: horizon,
       forecast,
     };
-  }
-
-  private async validateCategory(userId: string, categoryId: string, type: TransactionType) {
-    const category = await this.categoriesRepo.findFirst({
-      where: { id: categoryId, userId },
-    });
-
-    if (!category) {
-      throw new BadRequestException('Category not found.');
-    }
-
-    if (category.type !== type) {
-      throw new BadRequestException('Category type does not match transaction type.');
-    }
   }
 }

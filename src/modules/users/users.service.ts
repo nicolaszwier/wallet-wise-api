@@ -10,6 +10,7 @@ import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { Category, SupportStatus } from '@prisma/client';
 import { I18nContext, I18nService } from 'nestjs-i18n';
+import { mapCategoryForResponse } from 'src/shared/utils/category-display.util';
 
 dayjs.extend(utc);
 
@@ -32,7 +33,7 @@ export class UsersService {
         name: true,
         email: true,
         picture: true,
-        categories: { orderBy: { description: 'asc' } },
+        categories: { orderBy: [{ parentCategoryId: 'asc' }, { description: 'asc' }] },
       },
     }) as unknown as {
       name: string,
@@ -40,24 +41,21 @@ export class UsersService {
       categories: Category[]
     };
 
+    const lang = I18nContext.current()?.lang ?? 'en';
+
     return {
       ...result,
-      categories: result?.categories?.map(el => {
-        return {
-          ...el,
-          description: this.i18n.t(`categories.${el.description}`, { lang: I18nContext.current().lang })
-        }
-      }) 
-    }
+      categories: result?.categories?.map((category) => mapCategoryForResponse(category, this.i18n, lang)),
+    };
   }
 
   async deleteAccount(userId: string) {
     try {
       await this.usersRepo.transaction([
-        this.categoriesRepo.deleteMany({ where: { userId: userId } }),
         this.transactionsRepo.deleteMany({ where: { userId: userId } }),
         this.recurringConfigsRepo.deleteMany({ where: { userId: userId } }),
         this.periodsRepo.deleteMany({ where: { userId: userId } }),
+        this.categoriesRepo.deleteMany({ where: { userId: userId } }),
         this.planningsRepo.deleteMany({ where: { userId: userId } }),
         this.usersRepo.delete({ where: { id: userId } }),
       ]);

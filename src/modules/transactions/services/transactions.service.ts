@@ -10,8 +10,12 @@ import * as dayjs from 'dayjs';
 import * as utc from 'dayjs/plugin/utc';
 import { getEndOfMonth, getStartOfMonth, toCalendarDateStorage } from 'src/shared/utils/utils';
 import { I18nService, I18nContext } from 'nestjs-i18n';
-import { Category, Transaction } from '@prisma/client';
+import { Category, CategorySource, Transaction } from '@prisma/client';
 import { MonthlyBalance } from '../model/Balance';
+import { ValidateCategoryService } from 'src/modules/categories/services/validate-category.service';
+import { CategoriesRepository } from 'src/shared/database/repositories/categories.repositories';
+import { mapCategoryForResponse, resolveCategoryDescription } from 'src/shared/utils/category-display.util';
+import { rollUpChildCategoryBalances } from 'src/shared/utils/category-balance.util';
 
 dayjs.extend(utc);
 
@@ -28,6 +32,8 @@ export class TransactionsService {
     private readonly periodsService: PeriodsService,
     private readonly i18n: I18nService,
     private readonly recurringConfigsService: RecurringConfigsService,
+    private readonly validateCategoryService: ValidateCategoryService,
+    private readonly categoriesRepo: CategoriesRepository,
   ) {}
 
   async create(userId: string, createTransactionDto: CreateTransactionDto) {
@@ -48,6 +54,7 @@ export class TransactionsService {
       await this.validateEntitiesOwnership({
         userId,
       });
+      await this.validateCategoryService.validateForTransaction(userId, categoryId, type);
       const normalizedDate = toCalendarDateStorage(date);
       const periodId = await this.periodsService.getPeriodId(userId, planningId, normalizedDate.toISOString());
       const transaction = await this.transactionsRepo.create({
@@ -115,6 +122,7 @@ export class TransactionsService {
         const { planningId, categoryId, description, amount, date, isPaid, type } = transaction;
 
         try {
+          await this.validateCategoryService.validateForTransaction(userId, categoryId, type);
           const periodId = await this.periodsService.getPeriodId(userId, planningId, date);
           transactions.push({
             userId,
@@ -183,14 +191,11 @@ export class TransactionsService {
       orderBy: { date: 'asc' },
     }) as TransactionResponse[];
 
-    return response.map(el => {
+    return response.map((el) => {
       return {
         ...el,
-        category: {
-          ...el.category,
-          description: this.i18n.t(`categories.${el.category.description}`, { lang: I18nContext.current().lang }),
-        }
-      }
+        category: mapCategoryForResponse(el.category, this.i18n, I18nContext.current()?.lang ?? 'en'),
+      };
     }) || []
   }
 
@@ -365,15 +370,42 @@ export class TransactionsService {
         categories: [],
       } as MonthlyBalanceResponse;
     }
+
+    const userCategories = await this.categoriesRepo.findMany({ where: { userId } });
+    const categoryById = new Map(userCategories.map((category) => [category.id, category]));
+    const categoryMeta = new Map(
+      userCategories.map((category) => [
+        category.id,
+        {
+          parentCategoryId: category.parentCategoryId,
+          description: category.description,
+          icon: category.icon,
+          type: category.type,
+        },
+      ]),
+    );
+    const lang = I18nContext.current()?.lang ?? 'en';
+    const rolledUpCategories = rollUpChildCategoryBalances(result[0]?.categories ?? [], categoryMeta);
     
     return {
       ...result[0],
-      categories:  result[0]?.categories.map(el => {
+      categories: rolledUpCategories.map((el) => {
+        const category = categoryById.get(el.categoryId);
+
         return {
           ...el,
-          description: this.i18n.t(`categories.${el.description}`, { lang: I18nContext.current().lang }),
-        }
-      })       
+          parentCategoryId: category?.parentCategoryId ?? null,
+          description: resolveCategoryDescription(
+            {
+              source: category?.source ?? CategorySource.SEED,
+              description: category?.description ?? el.description,
+              customLabel: category?.customLabel ?? null,
+            },
+            this.i18n,
+            lang,
+          ),
+        };
+      }),
     } as MonthlyBalanceResponse;
   }
 
@@ -386,6 +418,7 @@ export class TransactionsService {
         transactionId,
         periodId,
       });
+      await this.validateCategoryService.validateForTransaction(userId, categoryId, type);
       const newPeriodId = await this.periodsService.getPeriodId(userId, planningId, date);
       await this.transactionsRepo.update({
         where: { id: transactionId },
