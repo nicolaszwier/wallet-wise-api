@@ -111,8 +111,10 @@ model User {
   language       String?
   googleId       String?
   appleId        String?
-  locale         String?
-  picture        String?
+  locale               String?
+  picture              String?
+  passwordResetToken   String?   @map("password_reset_token")
+  passwordResetExpires DateTime? @map("password_reset_expires")
 
   categories Category[]
 
