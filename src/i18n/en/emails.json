@@ -1,0 +1,14 @@
+{
+  "welcome": {
+    "subject": "Welcome to WalletWise!",
+    "greeting": "Hi {{name}},",
+    "body": "Thanks for signing up for WalletWise. We're excited to help you take control of your finances."
+  },
+  "resetPassword": {
+    "subject": "Reset your WalletWise password",
+    "greeting": "Hi {{name}},",
+    "body": "We received a request to reset your WalletWise password. Click the button below to choose a new password.",
+    "buttonLabel": "Reset password",
+    "expiryNote": "This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email."
+  }
+}

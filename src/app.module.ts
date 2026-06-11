@@ -5,6 +5,7 @@ import { AcceptLanguageResolver, HeaderResolver, I18nModule, QueryResolver } fro
 import * as path from 'path';
 
 import { DatabaseModule } from './shared/database/database.module';
+import { MailModule } from './shared/mail/mail.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthGuard } from './modules/auth/auth.guard';
@@ -27,6 +28,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
     }),
     UsersModule,
     DatabaseModule,
+    MailModule,
     AuthModule,
     PlanningsModule,
     PeriodsModule,

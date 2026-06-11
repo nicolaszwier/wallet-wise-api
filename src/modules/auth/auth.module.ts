@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { env } from 'src/shared/config/env';
 import { PlanningsModule } from '../plannings/plannings.module';
+import { MailModule } from 'src/shared/mail/mail.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { PlanningsModule } from '../plannings/plannings.module';
       secret: env.jwtSecret,
     }),
     PlanningsModule,
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService],
